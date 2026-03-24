@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- ANSI Color Codes -->
+    <conversionRule conversionWord="clr"
+                    converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex"
+                    converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+
+    <!-- Color mapping per log level -->
+    <property name="RESET"   value="%clr(){reset}"/>
+    <property name="GREY"    value="%clr(%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}){faint}"/>
+    <property name="APP"     value="%clr([${springAppName:-app}]){cyan}"/>
+    <property name="THREAD"  value="%clr([%15.15t]){faint}"/>
+    <property name="LOGGER"  value="%clr(%-40.40logger{39}){cyan}"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                ${GREY} ${APP} ${THREAD} %clr(%-5level){
+                ERROR=bold_red,
+                WARN=yellow,
+                INFO=green,
+                DEBUG=blue,
+                TRACE=faint
+                } %clr([traceId=%X{traceId:-NO_TRACE}]){magenta} %clr([spanId=%X{spanId:-NO_SPAN}]){yellow} ${LOGGER} : %msg%n%wex
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- Dev profile: DEBUG level, coloured console -->
+    <springProfile name="dev">
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- Prod profile: INFO level, no colour (log aggregators don't need ANSI) -->
+    <springProfile name="prod">
+        <appender name="CONSOLE_PLAIN" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>
+                    %d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [traceId=%X{traceId:-NO_TRACE}] [spanId=%X{spanId:-NO_SPAN}] %logger{39} : %msg%n%wex
+                </pattern>
+            </encoder>
+        </appender>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_PLAIN"/>
+        </root>
+    </springProfile>
+
+    <!-- Fallback if no profile is set -->
+    <springProfile name="!(dev | prod)">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+</configuration>
