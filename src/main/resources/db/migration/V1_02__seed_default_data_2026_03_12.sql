@@ -1,13 +1,11 @@
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
 -- roles
-INSERT INTO public.roles (name) VALUES
+INSERT INTO roles (name) VALUES
     ('SUPER_ADMIN'),
     ('ADMIN'),
-    ('MERCHANT');
+    ('USER');
 
 -- permissions
-INSERT INTO public.permissions (name, description) VALUES
+INSERT INTO permissions (name, description) VALUES
     -- user management
     ( 'user:read',           'View users'),
     ( 'user:create',         'Create users'),
@@ -62,12 +60,12 @@ INSERT INTO public.permissions (name, description) VALUES
 
 -- default super admin user
 -- SUPER_ADMIN gets everything
-INSERT INTO public.role_permissions (role_id, permission_id)
-SELECT (SELECT id FROM public.roles WHERE name = 'SUPER_ADMIN'), id FROM public.permissions;
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT (SELECT id FROM roles WHERE name = 'SUPER_ADMIN'), id FROM permissions;
 
 -- ADMIN gets everything except role/permission management and blacklisting
-INSERT INTO public.role_permissions (role_id, permission_id)
-SELECT (SELECT id FROM public.roles WHERE name = 'ADMIN'), id FROM public.permissions
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT (SELECT id FROM roles WHERE name = 'ADMIN'), id FROM permissions
 WHERE name NOT IN (
                    'role:create', 'role:delete',
                    'permission:assign',
@@ -75,8 +73,8 @@ WHERE name NOT IN (
     );
 
 -- MERCHANT gets read/transact on their own resources only
-INSERT INTO public.role_permissions (role_id, permission_id)
-SELECT (SELECT id FROM public.roles WHERE name = 'MERCHANT'), id FROM public.permissions
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT (SELECT id FROM roles WHERE name = 'USER'), id FROM permissions
 WHERE name IN (
                'account:read', 'account:create',
                'card:read', 'card:create', 'card:block',
@@ -85,7 +83,7 @@ WHERE name IN (
     );
 
 -- super admin user
-INSERT INTO public.users (
+INSERT INTO users (
     firstname, lastname, email, phone,
     password_hash, user_status, role_id,
     created_at, updated_at
@@ -93,13 +91,13 @@ INSERT INTO public.users (
              'Super', 'Admin',
              'superadmin@verveguard.com',
              '00000000000',
-             crypt('Admin123!', gen_salt('bf', 10)),
+             '$2a$10$mRxdXj7YESYMm/DIxn9X9OVXykdCww6ZEUX9a1jrOY2GildUkm4Ji',
              'ACTIVE',
-             (SELECT id FROM public.roles WHERE name = 'SUPER_ADMIN'),
+             (SELECT id FROM roles WHERE name = 'SUPER_ADMIN'),
              now(), now()
          );
 
-INSERT INTO public.tier_config (
+INSERT INTO tier_config (
     tier,
     daily_transaction_limit,
     single_transaction_limit,
@@ -127,7 +125,7 @@ INSERT INTO public.tier_config (
       );
 
 -- test merchant user
-INSERT INTO public.users (
+INSERT INTO users (
     firstname, lastname, email, phone,
     password_hash, user_status, role_id,
     created_at, updated_at
@@ -135,18 +133,18 @@ INSERT INTO public.users (
              'Demo', 'Merchant',
              'demo.merchant@verveguard.com',
              '11111111112',
-             crypt('Admin123!', gen_salt('bf', 10)),
+             '$2a$10$mRxdXj7YESYMm/DIxn9X9OVXykdCww6ZEUX9a1jrOY2GildUkm4Ji',
              'ACTIVE',
-             (SELECT id FROM public.roles WHERE name = 'MERCHANT'),
+             (SELECT id FROM roles WHERE name = 'USER'),
              now(), now()
          );
 
 -- demo merchant
-INSERT INTO public.merchants (
+INSERT INTO merchants (
     user_id, address, kyc_status, merchant_status, tier,
     created_at, updated_at
 ) VALUES (
-             (SELECT id FROM public.users WHERE email = 'demo.merchant@verveguard.com'),
+             (SELECT id FROM users WHERE email = 'demo.merchant@verveguard.com'),
              '1 Demo Street, Lagos',
              'APPROVED',
              'ACTIVE',
@@ -155,13 +153,13 @@ INSERT INTO public.merchants (
          );
 
 -- demo account with funds
-INSERT INTO public.accounts (
+INSERT INTO accounts (
     merchant_id, account_number, account_type,
     currency, balance, ledger_balance, account_status,
     created_at, updated_at
 ) VALUES (
-             (SELECT id FROM public.merchants WHERE user_id = (
-                 SELECT id FROM public.users WHERE email = 'demo.merchant@verveguard.com'
+             (SELECT id FROM merchants WHERE user_id = (
+                 SELECT id FROM users WHERE email = 'demo.merchant@verveguard.com'
              )),
              '0000000000',
              'SETTLEMENT',
@@ -173,14 +171,14 @@ INSERT INTO public.accounts (
          );
 
 -- demo card linked to account
-INSERT INTO public.cards (
+INSERT INTO cards (
     card_number, card_hash, account_id, card_type, scheme,
     expiry_month, expiry_year, card_status,
     created_at, updated_at
 ) VALUES (
              '4011********1111',
-             encode(digest('4011111111111111', 'sha256'), 'hex'),
-             (SELECT id FROM public.accounts WHERE account_number = '0000000000'),
+             '5e81b4df99b1a00af009d61f9bfb04c03af02364ad6d269a7cfb0fab1fd06181',
+             (SELECT id FROM accounts WHERE account_number = '0000000000'),
              'VIRTUAL',
              'VISA',
              12, 2028,

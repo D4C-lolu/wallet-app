@@ -1,4 +1,4 @@
-package com.interswitch.walletapp.models.request;
+package com.interswitch.walletapp.models.response;
 
 import com.interswitch.walletapp.models.enums.AccountStatus;
 import com.interswitch.walletapp.models.enums.AccountType;

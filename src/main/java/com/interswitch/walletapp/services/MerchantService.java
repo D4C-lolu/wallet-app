@@ -1,5 +1,6 @@
 package com.interswitch.walletapp.services;
 
+import com.interswitch.walletapp.constants.Roles;
 import com.interswitch.walletapp.dao.MerchantDao;
 import com.interswitch.walletapp.exceptions.BadRequestException;
 import com.interswitch.walletapp.exceptions.ConflictException;
@@ -41,6 +42,7 @@ public class MerchantService {
 
     @Transactional
     public MerchantResponse createMerchant(CreateMerchantRequest request) {
+
         MerchantValidationResult validation = merchantDao.validateMerchantCreation(
                 request.userId(),
                 MerchantTier.TIER_1.name()
@@ -78,7 +80,7 @@ public class MerchantService {
 
     @Transactional
     public MerchantResponse registerNewUserAsMerchant(MerchantSignupRequest request) {
-        Long roleId = merchantDao.findRoleIdByName("MERCHANT")
+        Long roleId = merchantDao.findRoleIdByName(Roles.USER)
                 .orElseThrow(() -> new NotFoundException("Merchant role not found"));
 
         UserResponse newUser = userService.createUser(new CreateUserRequest(
@@ -175,10 +177,30 @@ public class MerchantService {
         return merchantDao.findByKycStatus(kycStatus, page, size, sortField, sortDirection);
     }
 
+
+    @Transactional
+    public MerchantResponse updateMerchantStatusAndKycStatus(Long merchantId, MerchantStatus merchantStatus, KycStatus kycStatus) {
+        MerchantResponse existing = getMerchantById(merchantId);
+        Long updatedBy = SecurityUtil.findCurrentUserId().orElse(null);
+
+        merchantDao.updateMerchantStatusAndKycStatus(merchantId, merchantStatus.name(), kycStatus.name(), updatedBy);
+
+        return new MerchantResponse(
+                existing.id(), existing.address(), kycStatus, merchantStatus, existing.tier(),
+                existing.userId(), existing.userFirstname(), existing.userLastname(),
+                existing.userEmail(), existing.userPhone(), existing.userStatus(),
+                existing.createdAt(), OffsetDateTime.now()
+        );
+    }
+
     @Transactional
     public MerchantResponse updateMerchantStatus(Long merchantId, MerchantStatus status) {
         MerchantResponse existing = getMerchantById(merchantId);
         Long updatedBy = SecurityUtil.findCurrentUserId().orElse(null);
+
+        if (existing.kycStatus() != KycStatus.APPROVED && status == MerchantStatus.ACTIVE) {
+            throw new BadRequestException("Merchant must be KYC approved before activation");
+        }
 
         merchantDao.updateMerchantStatus(merchantId, status.name(), updatedBy);
 

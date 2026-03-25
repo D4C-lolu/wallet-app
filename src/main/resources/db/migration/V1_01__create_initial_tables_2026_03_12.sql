@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS users (
     role_id                                 bigint NOT NULL,
     created_at                              timestamp with time zone NOT NULL DEFAULT now(),
     updated_at                              timestamp with time zone NOT NULL,
-    deleted_at                              timestamp with time zone,
+    deleted_at                              timestamp with time zone DEFAULT NULL,
     created_by                              bigint,
     updated_by                              bigint,
     deleted_by                              bigint,
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS merchants (
     tier                                    character varying (50) NOT NULL,
     created_at                              timestamp with time zone NOT NULL DEFAULT now(),
     updated_at                              timestamp with time zone NOT NULL,
-    deleted_at                              timestamp with time zone,
+    deleted_at                              timestamp with time zone DEFAULT NULL,
     created_by                              bigint,
     updated_by                              bigint,
     deleted_by                              bigint,
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     account_status                          character varying (50) NOT NULL,
     created_at                              timestamp with time zone NOT NULL DEFAULT now(),
     updated_at                              timestamp with time zone NOT NULL,
-    deleted_at                              timestamp with time zone,
+    deleted_at                              timestamp with time zone DEFAULT NULL,
     created_by                              bigint,
     updated_by                              bigint,
     deleted_by                              bigint,
@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS cards (
     card_status                             character varying (50) NOT NULL,  -- ACTIVE, BLOCKED, EXPIRED
     created_at                              timestamp with time zone NOT NULL DEFAULT now(),
     updated_at                              timestamp with time zone NOT NULL,
-    deleted_at                              timestamp with time zone,
+    deleted_at                              timestamp with time zone DEFAULT NULL,
     created_by                              bigint,
     updated_by                              bigint,
     deleted_by                              bigint,
@@ -209,9 +209,14 @@ CREATE INDEX IF NOT EXISTS idx_transactions_status
 CREATE INDEX IF NOT EXISTS idx_transactions_account_status
     on transactions (account_id, transaction_status);
 
+
+ALTER TABLE transactions ADD COLUMN transfer_id bigint;
+
 ALTER TABLE transactions
-    ADD COLUMN transfer_id                  bigint,
-    ADD CONSTRAINT transactions_transfer_fkey FOREIGN KEY (transfer_id) REFERENCES transfers (id) ON DELETE RESTRICT;
+    ADD CONSTRAINT transactions_transfer_fkey
+        FOREIGN KEY (transfer_id)
+            REFERENCES transfers (id)
+            ON DELETE RESTRICT;
 
 CREATE INDEX IF NOT EXISTS idx_transactions_transfer_id
     on transactions (transfer_id);

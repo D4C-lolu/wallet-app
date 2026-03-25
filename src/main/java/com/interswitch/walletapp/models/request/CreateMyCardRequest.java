@@ -12,6 +12,6 @@ public record CreateMyCardRequest(
         @NotBlank String cardNumber,
         @NotNull CardType cardType,
         @NotNull CardScheme scheme,
-        @Min(1) @Max(12) int expiryMonth,
-        @Min(2025) int expiryYear
+        @NotNull @Min(1) @Max(12) int expiryMonth,
+        @NotNull @Min(2025) int expiryYear
 ) {}

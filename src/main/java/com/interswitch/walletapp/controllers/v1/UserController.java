@@ -46,7 +46,7 @@ public class UserController {
     public Page<UserResponse> getAllUsers(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
-            @ValidSortField(target = UserResponse.class) @RequestParam(defaultValue = "createdAt") String sortField,
+            @RequestParam(defaultValue = "created_at") String sortField,
             @RequestParam(defaultValue = "DESC") Sort.Direction sortDirection
     ) {
         return userService.getAllUsers(page, size, sortField, sortDirection);

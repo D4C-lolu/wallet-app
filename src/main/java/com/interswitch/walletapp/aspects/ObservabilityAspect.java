@@ -17,7 +17,7 @@ import java.util.UUID;
 @Component
 public class ObservabilityAspect {
 
-    @Around("execution(* interswitch.walletapp.*.*(..)) ")
+    @Around("execution(* com.interswitch.walletapp.*.*(..)) ")
     public Object observe(ProceedingJoinPoint pjp) throws Throwable {
 
         String method = pjp.getSignature().getName();

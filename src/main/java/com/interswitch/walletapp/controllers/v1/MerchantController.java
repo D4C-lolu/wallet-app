@@ -1,11 +1,13 @@
 package com.interswitch.walletapp.controllers.v1;
 
 import com.interswitch.walletapp.constants.Permissions;
+import com.interswitch.walletapp.constants.Roles;
 import com.interswitch.walletapp.models.enums.KycStatus;
 import com.interswitch.walletapp.models.enums.MerchantStatus;
 import com.interswitch.walletapp.models.request.CreateMerchantRequest;
 import com.interswitch.walletapp.models.request.MerchantSignupRequest;
 import com.interswitch.walletapp.models.request.UpdateMerchantRequest;
+import com.interswitch.walletapp.models.request.UpdateMerchantStatusRequest;
 import com.interswitch.walletapp.models.response.MerchantResponse;
 import com.interswitch.walletapp.services.MerchantService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -69,7 +71,7 @@ public class MerchantController {
     public Page<MerchantResponse> getAllMerchants(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortField,
+            @RequestParam(defaultValue = "created_at") String sortField,
             @RequestParam(defaultValue = "DESC") Sort.Direction sortDirection
     ) {
         return merchantService.getAllMerchants(page, size, sortField, sortDirection);
@@ -142,6 +144,24 @@ public class MerchantController {
             @RequestParam MerchantStatus status
     ) {
         return merchantService.updateMerchantStatus(merchantId, status);
+    }
+
+    @Operation(
+            summary = "Update Merchant & KYC Status",
+            description = "Administrative override for merchant account and verification status. Restricted to Admin/Super Admin."
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @PatchMapping("{merchantId}/administrative-status")
+    @PreAuthorize("hasRole('"+ Roles.ADMIN +"') or hasRole('" + Roles.SUPER_ADMIN + "')")
+    public MerchantResponse updateMerchantStatusAndKyc(
+            @PathVariable Long merchantId,
+            @RequestBody @Valid UpdateMerchantStatusRequest request
+    ) {
+        return merchantService.updateMerchantStatusAndKycStatus(
+                merchantId,
+                request.merchantStatus(),
+                request.kycStatus()
+        );
     }
 
     @Operation(

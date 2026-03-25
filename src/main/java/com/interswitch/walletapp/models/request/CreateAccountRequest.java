@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record CreateAccountRequest(
-        @NotBlank Long merchantId,
+        @NotNull Long merchantId,
         @NotNull AccountType accountType,
         @NotBlank @Size(min = 3, max = 3) String currency
 ) {}

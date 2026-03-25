@@ -7,8 +7,8 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
 public record TransactionIngestionRequest(
-        @NotBlank Long accountId,
-        @NotBlank Long merchantId,
+        @NotNull Long accountId,
+        @NotNull Long merchantId,
         @NotNull BigDecimal amount,
         @NotBlank @Size(min = 3, max = 3) String currency
 ) {}

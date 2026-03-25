@@ -64,12 +64,18 @@ public class MerchantDao {
             WHERE id = :id AND deleted_at IS NULL
             """;
 
-    private static final String CREATE_MERCHANT_VALIDATION = """
-            SELECT
-                EXISTS(SELECT 1 FROM merchants WHERE user_id = :userId AND deleted_at IS NULL) AS merchant_exists,
-                EXISTS(SELECT 1 FROM users WHERE id = :userId AND deleted_at IS NULL) AS user_exists,
-                EXISTS(SELECT 1 FROM tier_config WHERE tier = :tier) AS tier_exists
+    private static final String UPDATE_MERCHANT_STATUS_AND_KYC = """
+            UPDATE merchants SET merchant_status = :merchantStatus,
+            kyc_status = :kycStatus, updated_at = now(), updated_by = :updatedBy
+            WHERE id = :id AND deleted_at IS NULL
             """;
+
+    private static final String CREATE_MERCHANT_VALIDATION = """
+        SELECT
+            (SELECT COUNT(*) FROM merchants WHERE user_id = :userId AND deleted_at IS NULL) > 0 AS merchant_exists,
+            (SELECT COUNT(*) FROM users WHERE id = :userId AND deleted_at IS NULL) > 0 AS user_exists,
+            (SELECT COUNT(*) FROM tier_config WHERE tier = :tier) > 0 AS tier_exists
+        """;
 
     private static final String UPDATE_STATUS = """
             UPDATE merchants SET status = :status, updated_by = :updatedBy, updated_at = NOW()
@@ -85,6 +91,7 @@ public class MerchantDao {
         """;
 
     private static final String SELECT_BY_KYC = "SELECT * FROM merchants WHERE kyc_status = :kycStatus";
+
 
     public MerchantResponse getById(Long id) {
         return Objects.requireNonNull(namedJdbc.query(SELECT_BY_ID, new MapSqlParameterSource("id", id), merchantRowMapper()))
@@ -176,6 +183,11 @@ public class MerchantDao {
     public void updateMerchantStatus(Long id, String merchantStatus, Long updatedBy) {
         namedJdbc.update(UPDATE_MERCHANT_STATUS, new MapSqlParameterSource().addValue("id", id)
                 .addValue("merchantStatus", merchantStatus).addValue("updatedBy", updatedBy));
+    }
+
+    public void updateMerchantStatusAndKycStatus(Long id, String merchantStatus, String kycStatus, Long updatedBy) {
+        namedJdbc.update(UPDATE_MERCHANT_STATUS_AND_KYC, new MapSqlParameterSource().addValue("id", id)
+                .addValue("merchantStatus", merchantStatus).addValue("kycStatus", kycStatus).addValue("updatedBy", updatedBy));
     }
 
     public void updateTier(Long id, String tier, Long updatedBy) {

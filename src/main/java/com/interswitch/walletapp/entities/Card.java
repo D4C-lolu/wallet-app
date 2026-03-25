@@ -23,8 +23,11 @@ public class Card extends FullAudit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 19)
+    @Column(nullable = false, length = 19)
     private String cardNumber;
+
+    @Column(nullable = false, unique = true, length = 19)
+    private String cardHash;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)

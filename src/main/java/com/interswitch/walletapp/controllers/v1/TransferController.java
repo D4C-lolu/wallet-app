@@ -46,7 +46,7 @@ public class TransferController {
             description = "Allows a merchant to view the transfer history for an account they own. Requires MERCHANT role."
     )
     @GetMapping("me/account/{accountId}")
-    @PreAuthorize("hasRole('" + Roles.MERCHANT + "')")
+    @PreAuthorize("hasRole('" + Roles.USER + "')")
     public Page<TransferResponse> getMyTransfersByAccount(
             @PathVariable Long accountId,
             @RequestParam(defaultValue = "1") int page,

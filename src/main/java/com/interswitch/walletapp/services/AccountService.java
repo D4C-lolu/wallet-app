@@ -6,7 +6,7 @@ import com.interswitch.walletapp.exceptions.BadRequestException;
 import com.interswitch.walletapp.exceptions.NotFoundException;
 import com.interswitch.walletapp.models.enums.AccountStatus;
 import com.interswitch.walletapp.models.enums.KycStatus;
-import com.interswitch.walletapp.models.request.AccountResponse;
+import com.interswitch.walletapp.models.response.AccountResponse;
 import com.interswitch.walletapp.models.request.CreateAccountRequest;
 import com.interswitch.walletapp.models.request.CreateMyAccountRequest;
 import com.interswitch.walletapp.models.projections.MerchantAccountValidation;

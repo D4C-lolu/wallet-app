@@ -1,6 +1,7 @@
 package com.interswitch.walletapp.services.roles;
 
 import com.interswitch.walletapp.base.BaseIntegrationTest;
+import com.interswitch.walletapp.constants.Roles;
 import com.interswitch.walletapp.entities.Permission;
 import com.interswitch.walletapp.entities.Role;
 import com.interswitch.walletapp.entities.User;
@@ -115,7 +116,7 @@ public class RoleServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should assign permission to role successfully")
     void shouldAssignPermissionToRoleSuccessfully() {
-        Role role = roleRepository.findByName("MERCHANT").orElseThrow();
+        Role role = roleRepository.findByName(Roles.USER).orElseThrow();
         Permission permission = permissionRepository.findByName("tier:read").orElseThrow();
 
         assertThatNoException().isThrownBy(() ->
@@ -159,7 +160,7 @@ public class RoleServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should assign permissions in bulk successfully")
     void shouldAssignPermissionsInBulkSuccessfully() {
-        Role role = roleRepository.findByName("MERCHANT").orElseThrow();
+        Role role = roleRepository.findByName(Roles.USER).orElseThrow();
         List<Long> permissionIds = permissionRepository.findAll().stream()
                 .filter(p -> !rolePermissionRepository.existsByRoleIdAndPermissionId(role.getId(), p.getId()))
                 .limit(3)
@@ -190,7 +191,7 @@ public class RoleServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should fail revoke permission that is not assigned")
     void shouldFailRevokePermissionNotAssigned() {
-        Role role = roleRepository.findByName("MERCHANT").orElseThrow();
+        Role role = roleRepository.findByName(Roles.USER).orElseThrow();
         Permission permission = permissionRepository.findByName("role:create").orElseThrow();
 
         assertThatThrownBy(() -> roleService.revokePermission(role.getId(), permission.getId()))

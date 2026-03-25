@@ -5,6 +5,7 @@ import com.interswitch.walletapp.constants.Permissions;
 import com.interswitch.walletapp.constants.Roles;
 import com.interswitch.walletapp.models.enums.AccountStatus;
 import com.interswitch.walletapp.models.request.*;
+import com.interswitch.walletapp.models.response.AccountResponse;
 import com.interswitch.walletapp.services.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -40,7 +41,7 @@ public class AccountController {
             description = "Requires MERCHANT role. Allows a merchant to open their own account.")
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("me")
-    @PreAuthorize("hasRole('"+ Roles.MERCHANT +"')")
+    @PreAuthorize("hasRole('"+ Roles.USER +"')")
     public AccountResponse createAccountForSelf(@RequestBody @Valid CreateMyAccountRequest request) {
         return accountService.createAccountForSelf(request);
     }

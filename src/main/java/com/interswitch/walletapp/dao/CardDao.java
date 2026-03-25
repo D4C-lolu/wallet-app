@@ -75,7 +75,6 @@ public class CardDao {
             AND m.deleted_at IS NULL
             AND a.deleted_at IS NULL
         """;
-
     private static final String CARD_CREATION_VALIDATION = """
         SELECT
             a.id AS account_id,
@@ -83,14 +82,14 @@ public class CardDao {
             m.tier,
             tc.max_cards,
             COUNT(c.id) AS current_card_count,
-            EXISTS(SELECT 1 FROM cards WHERE card_hash = :cardHash AND deleted_at IS NULL) AS card_hash_exists
+            (SELECT COUNT(*) FROM cards WHERE card_hash = :cardHash AND deleted_at IS NULL) > 0 AS card_hash_exists
         FROM accounts a
         JOIN merchants m ON a.merchant_id = m.id
         JOIN tier_config tc ON tc.tier = m.tier
         LEFT JOIN cards c ON c.account_id = a.id AND c.deleted_at IS NULL
         WHERE a.id = :accountId AND a.deleted_at IS NULL
         GROUP BY a.id, m.id, m.tier, tc.max_cards
-        """;
+    """;
 
     private static final String EXISTS_CARD = """
         SELECT COUNT(*) FROM cards WHERE id = :id AND deleted_at IS NULL

@@ -45,7 +45,7 @@ public class CardController {
     )
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("me")
-    @PreAuthorize("hasRole('"+ Roles.MERCHANT +"')")
+    @PreAuthorize("hasRole('"+ Roles.USER +"')")
     public CardResponse createCardForSelf(@RequestBody @Valid CreateMyCardRequest request) {
         return cardService.createCardForSelf(request);
     }
@@ -67,7 +67,7 @@ public class CardController {
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PatchMapping("{cardId}/block/me")
-    @PreAuthorize("hasRole('"+ Roles.MERCHANT +"')")
+    @PreAuthorize("hasRole('"+ Roles.USER +"')")
     public void blockCardForSelf(@PathVariable Long cardId) {
         cardService.blockCardForSelf(cardId);
     }

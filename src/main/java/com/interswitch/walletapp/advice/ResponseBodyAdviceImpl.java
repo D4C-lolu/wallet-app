@@ -126,7 +126,7 @@ public class ResponseBodyAdviceImpl  {
             AuthorizationDeniedException.class,
             ForbiddenException.class
     })
-    public ResponseEntity<ApiError> handleForbiddenException(ForbiddenException e, HttpServletRequest request) {
+    public ResponseEntity<ApiError> handleForbiddenException(Exception e, HttpServletRequest request) {
         final var errorTraceId = UUID.randomUUID().toString();
         final var uri = request.getRequestURI();
         log.error("Forbidden access at {} with id {}", uri, errorTraceId);

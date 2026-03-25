@@ -1,6 +1,7 @@
 package com.interswitch.walletapp.services;
 
 import com.interswitch.walletapp.base.BaseIntegrationTest;
+import com.interswitch.walletapp.constants.Roles;
 import com.interswitch.walletapp.entities.Role;
 import com.interswitch.walletapp.entities.User;
 import com.interswitch.walletapp.exceptions.BadRequestException;
@@ -62,12 +63,12 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
         CreateUserRequest request = new CreateUserRequest(
                 "John", "Doe", null,
                 "john.doe@test.com", "55555555555",
-                "Admin123!", "01JROLES00000000000000002B"
+                "Admin123!", 2L
         );
 
         UserResponse response = userService.createUser(request);
 
-        assertThat(response.id()).isNotBlank();
+        assertThat(response.id()).isNotNull();
         assertThat(response.firstname()).isEqualTo(request.firstname());
         assertThat(response.lastname()).isEqualTo(request.lastname());
         assertThat(response.email()).isEqualTo(request.email());
@@ -83,7 +84,7 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
         CreateUserRequest request = new CreateUserRequest(
                 "Jane", "Doe", null,
                 "jane.doe@test.com", "66666666666",
-                "Admin123!", "01JROLES00000000000000002B"
+                "Admin123!", 2L
         );
 
         UserResponse response = userService.createUser(request);
@@ -100,7 +101,7 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
         CreateUserRequest request = new CreateUserRequest(
                 "John", "Doe", null,
                 existing.getEmail(), "77777777777",
-                "Admin123!", "01JROLES00000000000000002B"
+                "Admin123!", 2L
         );
 
         assertThatThrownBy(() -> userService.createUser(request))
@@ -116,7 +117,7 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
         CreateUserRequest request = new CreateUserRequest(
                 "John", "Doe", null,
                 "unique@test.com", existing.getPhone(),
-                "Admin123!", "01JROLES00000000000000002B"
+                "Admin123!", 2L
         );
 
         assertThatThrownBy(() -> userService.createUser(request))
@@ -130,7 +131,7 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
         CreateUserRequest request = new CreateUserRequest(
                 "John", "Doe", null,
                 "unique2@test.com", "99999999999",
-                "Admin123!", "NONEXISTENTROLE00000000000"
+                "Admin123!", 9999L
         );
 
         assertThatThrownBy(() -> userService.createUser(request))
@@ -155,7 +156,7 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should fail get user with non existent id")
     void shouldFailGetUserWithNonExistentId() {
-        assertThatThrownBy(() -> userService.getUserById("NONEXISTENT00000000000000"))
+        assertThatThrownBy(() -> userService.getUserById(999L))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessage("User not found");
     }
@@ -163,7 +164,7 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should get all users paginated")
     void shouldGetAllUsersPaginated() {
-        Page<UserResponse> page = userService.getAllUsers(1, 10, "createdAt", Sort.Direction.DESC);
+        Page<UserResponse> page = userService.getAllUsers(1, 10, "created_at", Sort.Direction.DESC);
 
         assertThat(page).isNotNull();
         assertFalse(page.getContent().isEmpty());
@@ -176,7 +177,7 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
     void shouldUpdateUserSuccessfully() {
         User existing = userRepository.findByEmail("testadmin@verveguard.com").orElseThrow();
         UpdateUserRequest request = new UpdateUserRequest(
-                "Updated", "Name", null, null, null
+                "Updated", "Name", null, existing.getPhone(), existing.getEmail()
         );
 
         UserResponse response = userService.updateUser(existing.getId(), request);
@@ -223,6 +224,7 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
 
         userService.changeUserStatus(existing.getId(), UserStatus.SUSPENDED);
 
+        forceFlush();
         User updated = userRepository.findById(existing.getId()).orElseThrow();
         assertThat(updated.getUserStatus()).isEqualTo(UserStatus.SUSPENDED);
     }
@@ -231,10 +233,11 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
     @DisplayName("should change user role successfully")
     void shouldChangeUserRoleSuccessfully() {
         User existing    = userRepository.findByEmail("testadmin@verveguard.com").orElseThrow();
-        Role merchantRole = roleRepository.findByName("MERCHANT").orElseThrow();
+        Role merchantRole = roleRepository.findByName(Roles.USER).orElseThrow();
 
         userService.changeUserRole(existing.getId(), merchantRole.getId());
 
+        forceFlush();
         User updated = userRepository.findById(existing.getId()).orElseThrow();
         assertThat(updated.getRole().getId()).isEqualTo(merchantRole.getId());
     }
@@ -244,7 +247,8 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
     void shouldFailChangeUserRoleWithNonExistentRole() {
         User existing = userRepository.findByEmail("testadmin@verveguard.com").orElseThrow();
 
-        assertThatThrownBy(() -> userService.changeUserRole(existing.getId(), "NONEXISTENTROLE00000000000"))
+        forceFlush();
+        assertThatThrownBy(() -> userService.changeUserRole(existing.getId(), 999L))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessage("Role not found");
     }
@@ -295,9 +299,9 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
         User toDelete   = userRepository.findByEmail("testmerchant@verveguard.com").orElseThrow();
 
         userService.deleteUser(toDelete.getId());
-
+        forceFlush();
         User deleted = userRepository.findById(toDelete.getId()).orElseThrow();
-        assertThat(deleted.isDeleted()).isTrue();
+        assertThat(deleted.isNotDeleted()).isFalse();
         assertThat(deleted.getDeletedAt()).isNotNull();
         assertThat(deleted.getDeletedBy()).isEqualTo(superAdmin.getId());
     }

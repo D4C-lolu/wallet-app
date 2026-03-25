@@ -2,7 +2,7 @@ package com.interswitch.walletapp.dao;
 
 import com.interswitch.walletapp.models.enums.AccountStatus;
 import com.interswitch.walletapp.models.enums.AccountType;
-import com.interswitch.walletapp.models.request.AccountResponse;
+import com.interswitch.walletapp.models.response.AccountResponse;
 import com.interswitch.walletapp.models.projections.MerchantAccountValidation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;

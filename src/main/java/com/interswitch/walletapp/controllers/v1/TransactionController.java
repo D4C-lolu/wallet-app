@@ -33,7 +33,7 @@ public class TransactionController {
             description = "Allows a merchant to view the transaction history for their own account. Requires MERCHANT role."
     )
     @GetMapping("me/account/{accountId}")
-    @PreAuthorize("hasRole('" + Roles.MERCHANT + "')")
+    @PreAuthorize("hasRole('" + Roles.USER + "')")
     public Page<TransactionResponse> getMyTransactionsByAccount(
             @PathVariable Long accountId,
             @RequestParam(defaultValue = "1") int page,
