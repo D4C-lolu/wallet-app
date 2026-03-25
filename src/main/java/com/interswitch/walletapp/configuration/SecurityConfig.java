@@ -1,6 +1,5 @@
 package com.interswitch.walletapp.configuration;
 
-import com.interswitch.walletapp.constants.Permissions;
 import com.interswitch.walletapp.filters.JwtAuthFilter;
 import com.interswitch.walletapp.security.AccessDeniedHandlerImpl;
 import com.interswitch.walletapp.security.AuthEntryPoint;
