@@ -32,129 +32,131 @@ VervePay operates on a progressive trust model with three distinct levels. Movem
 
 ## 📡 API Reference
 
-### 1. Authentication (`/auth`)
+> All endpoints are prefixed with `/api/v1/`
+
+### 1. Authentication (`/api/v1/auth`)
 *Token issuance and session management.*
 
 | Method | Endpoint | Description | Authority |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/auth/login` | Authenticate and receive a JWT Bearer token. | *PermitAll* |
-| **POST** | `/auth/refresh` | Refresh an expired access token. | *PermitAll* |
+| **POST** | `/api/v1/auth/login` | Authenticate and receive a JWT Bearer token. | *PermitAll* |
+| **POST** | `/api/v1/auth/refresh` | Refresh an expired access token. | *PermitAll* |
 
 ---
 
-### 2. User Management (`/users`)
+### 2. User Management (`/api/v1/users`)
 *System identity management, role assignments, and credential updates.*
 
 | Method | Endpoint | Description | Authority |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/users` | Create a new system user. | `USER_CREATE` |
-| **GET** | `/users` | Paginated list of all users. | `USER_READ` |
-| **GET** | `/users/{userId}` | Fetch a user's full profile by ID. | `USER_READ` |
-| **PUT** | `/users/{userId}` | Update user profile details. | `USER_UPDATE` |
-| **PATCH** | `/users/{userId}/status` | Activate or suspend a user account. | `USER_UPDATE` |
-| **PATCH** | `/users/{userId}/role` | Reassign a user's system role. | `USER_UPDATE` |
-| **PATCH** | `/users/{userId}/password` | Change account credentials. | *Owner* |
-| **DELETE** | `/users/{userId}` | Soft delete a user account. | `USER_DELETE` |
+| **POST** | `/api/v1/users` | Create a new system user. | `USER_CREATE` |
+| **GET** | `/api/v1/users` | Paginated list of all users. | `USER_READ` |
+| **GET** | `/api/v1/users/{userId}` | Fetch a user's full profile by ID. | `USER_READ` |
+| **PUT** | `/api/v1/users/{userId}` | Update user profile details. | `USER_UPDATE` |
+| **PATCH** | `/api/v1/users/{userId}/status` | Activate or suspend a user account. | `USER_UPDATE` |
+| **PATCH** | `/api/v1/users/{userId}/role` | Reassign a user's system role. | `USER_UPDATE` |
+| **PATCH** | `/api/v1/users/{userId}/password` | Change account credentials. | *Owner* |
+| **DELETE** | `/api/v1/users/{userId}` | Soft delete a user account. | `USER_DELETE` |
 
 ---
 
-### 3. Merchant Management (`/merchants`)
+### 3. Merchant Management (`/api/v1/merchants`)
 *Full lifecycle management for merchant entities, from registration through KYC and tier progression.*
 
 | Method | Endpoint | Description | Authority |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/merchants` | Admin-initiated merchant profile creation. | `MERCHANT_CREATE` |
-| **POST** | `/merchants/register` | **Public** signup for new users registering as merchants. | *PermitAll* |
-| **POST** | `/merchants/self-register` | Existing authenticated user promotes account to merchant. | *Authenticated* |
-| **GET** | `/merchants` | Paginated list of all merchants. | `MERCHANT_READ` |
-| **GET** | `/merchants/status` | Filter merchants by account status. | `MERCHANT_READ` |
-| **GET** | `/merchants/kyc-status` | Filter merchants by KYC verification level. | `MERCHANT_READ` |
-| **GET** | `/merchants/{merchantId}` | Fetch full merchant profile by ID. | `MERCHANT_READ` |
-| **PUT** | `/merchants/{merchantId}` | Update core merchant profile information. | `MERCHANT_UPDATE` |
-| **PATCH** | `/merchants/{merchantId}/status` | Activate or suspend a merchant account. | `MERCHANT_UPDATE` |
-| **PATCH** | `/merchants/{merchantId}/administrative-status` | Override both merchant and KYC status simultaneously. | `ADMIN` / `SUPER_ADMIN` |
-| **PATCH** | `/merchants/{merchantId}/kyc` | Approve or reject KYC documents. | `MERCHANT_KYC` |
-| **PATCH** | `/merchants/{merchantId}/tier/upgrade` | Advance merchant to the next tier (KYC-gated). | `MERCHANT_UPDATE` |
-| **PATCH** | `/merchants/{merchantId}/tier/downgrade` | Reduce merchant to the previous tier. | `MERCHANT_UPDATE` |
-| **DELETE** | `/merchants/{merchantId}` | Soft delete a merchant record. | `MERCHANT_DELETE` |
+| **POST** | `/api/v1/merchants` | Admin-initiated merchant profile creation. | `MERCHANT_CREATE` |
+| **POST** | `/api/v1/merchants/register` | **Public** signup for new users registering as merchants. | *PermitAll* |
+| **POST** | `/api/v1/merchants/self-register` | Existing authenticated user promotes account to merchant. | *Authenticated* |
+| **GET** | `/api/v1/merchants` | Paginated list of all merchants. | `MERCHANT_READ` |
+| **GET** | `/api/v1/merchants/status` | Filter merchants by account status. | `MERCHANT_READ` |
+| **GET** | `/api/v1/merchants/kyc-status` | Filter merchants by KYC verification level. | `MERCHANT_READ` |
+| **GET** | `/api/v1/merchants/{merchantId}` | Fetch full merchant profile by ID. | `MERCHANT_READ` |
+| **PUT** | `/api/v1/merchants/{merchantId}` | Update core merchant profile information. | `MERCHANT_UPDATE` |
+| **PATCH** | `/api/v1/merchants/{merchantId}/status` | Activate or suspend a merchant account. | `MERCHANT_UPDATE` |
+| **PATCH** | `/api/v1/merchants/{merchantId}/administrative-status` | Override both merchant and KYC status simultaneously. | `ADMIN` / `SUPER_ADMIN` |
+| **PATCH** | `/api/v1/merchants/{merchantId}/kyc` | Approve or reject KYC documents. | `MERCHANT_KYC` |
+| **PATCH** | `/api/v1/merchants/{merchantId}/tier/upgrade` | Advance merchant to the next tier (KYC-gated). | `MERCHANT_UPDATE` |
+| **PATCH** | `/api/v1/merchants/{merchantId}/tier/downgrade` | Reduce merchant to the previous tier. | `MERCHANT_UPDATE` |
+| **DELETE** | `/api/v1/merchants/{merchantId}` | Soft delete a merchant record. | `MERCHANT_DELETE` |
 
 ---
 
-### 4. Account Management (`/accounts`)
+### 4. Account Management (`/api/v1/accounts`)
 *Merchant wallet and escrow account lifecycle, balance tracking, and status control.*
 
 | Method | Endpoint | Description | Authority |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/accounts` | Admin creates an account for a specific merchant. | `ADMIN` / `SUPER_ADMIN` |
-| **POST** | `/accounts/me` | Merchant opens their own account (tier limit enforced). | `MERCHANT` |
-| **GET** | `/accounts/{accountId}` | Fetch account balance and status by ID. | `ACCOUNT_READ` |
-| **GET** | `/accounts/merchant/{merchantId}` | Paginated list of all accounts for a merchant. | `ACCOUNT_READ` |
-| **PATCH** | `/accounts/{accountId}/status` | Freeze, suspend, or activate an account. | `ACCOUNT_UPDATE` |
-| **DELETE** | `/accounts/{accountId}` | Soft delete an account. | `ACCOUNT_DELETE` |
+| **POST** | `/api/v1/accounts` | Admin creates an account for a specific merchant. | `ADMIN` / `SUPER_ADMIN` |
+| **POST** | `/api/v1/accounts/me` | User opens their own account (tier limit enforced). | `USER` |
+| **GET** | `/api/v1/accounts/{accountId}` | Fetch account balance and status by ID. | `ACCOUNT_READ` |
+| **GET** | `/api/v1/accounts/merchant/{merchantId}` | Paginated list of all accounts for a merchant. | `ACCOUNT_READ` |
+| **PATCH** | `/api/v1/accounts/{accountId}/status` | Freeze, suspend, or activate an account. | `ACCOUNT_UPDATE` |
+| **DELETE** | `/api/v1/accounts/{accountId}` | Soft delete an account. | `ACCOUNT_DELETE` |
 
 ---
 
-### 5. Card Management (`/cards`)
+### 5. Card Management (`/api/v1/cards`)
 *Issuance and lifecycle management for virtual and physical payment cards.*
 
 | Method | Endpoint | Description | Authority |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/cards` | Admin issues a card to a merchant account. | `ADMIN` / `SUPER_ADMIN` |
-| **POST** | `/cards/me` | Merchant issues a card for their own account. | `MERCHANT` |
-| **GET** | `/cards/{cardId}` | Fetch card metadata and status by ID. | `CARD_READ` |
-| **GET** | `/cards/account/{accountId}` | Paginated list of all cards linked to an account. | `CARD_READ` |
-| **PATCH** | `/cards/{cardId}/status` | Update card lifecycle state (e.g., ACTIVE, EXPIRED). | `CARD_UPDATE` |
-| **PATCH** | `/cards/{cardId}/block` | Admin hard-block on any card. | `ADMIN` / `SUPER_ADMIN` |
-| **PATCH** | `/cards/{cardId}/block/me` | Merchant immediately blocks their own card. | `MERCHANT` |
-| **DELETE** | `/cards/{cardId}` | Soft delete a card record. | `CARD_DELETE` |
+| **POST** | `/api/v1/cards` | Admin issues a card to a merchant account. | `ADMIN` / `SUPER_ADMIN` |
+| **POST** | `/api/v1/cards/me` | User issues a card for their own account. | `USER` |
+| **GET** | `/api/v1/cards/{cardId}` | Fetch card metadata and status by ID. | `CARD_READ` |
+| **GET** | `/api/v1/cards/account/{accountId}` | Paginated list of all cards linked to an account. | `CARD_READ` |
+| **PATCH** | `/api/v1/cards/{cardId}/status` | Update card lifecycle state (e.g., ACTIVE, EXPIRED). | `CARD_UPDATE` |
+| **PATCH** | `/api/v1/cards/{cardId}/block` | Admin hard-block on any card. | `ADMIN` / `SUPER_ADMIN` |
+| **PATCH** | `/api/v1/cards/{cardId}/block/me` | User immediately blocks their own card. | `USER` |
+| **DELETE** | `/api/v1/cards/{cardId}` | Soft delete a card record. | `CARD_DELETE` |
 
 ---
 
-### 6. Transfers (`/transfers`)
+### 6. Transfers (`/api/v1/transfers`)
 *Fund movement execution and transfer history.*
 
 | Method | Endpoint | Description | Authority |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/transfers/me` | Merchant initiates a transfer from their own account (balance and tier-limit validated). | `MERCHANT` |
-| **GET** | `/transfers/{transferId}` | Admin lookup for a specific transfer's metadata and status. | `ADMIN` / `SUPER_ADMIN` |
-| **GET** | `/transfers/me/account/{accountId}` | Merchant views transfer history for their own account. | `MERCHANT` |
-| **GET** | `/transfers/account/{accountId}` | Admin paginated view of all transfers for any account. | `ADMIN` / `SUPER_ADMIN` |
+| **POST** | `/api/v1/transfers/me` | User initiates a transfer from their own account (balance and tier-limit validated). | `USER` |
+| **GET** | `/api/v1/transfers/{transferId}` | Admin lookup for a specific transfer's metadata and status. | `ADMIN` / `SUPER_ADMIN` |
+| **GET** | `/api/v1/transfers/me/account/{accountId}` | User views transfer history for their own account. | `USER` |
+| **GET** | `/api/v1/transfers/account/{accountId}` | Admin paginated view of all transfers for any account. | `ADMIN` / `SUPER_ADMIN` |
 
 ---
 
-### 7. Transactions (`/transactions`)
+### 7. Transactions (`/api/v1/transactions`)
 *Immutable financial ledger entries generated automatically on every transfer.*
 
 | Method | Endpoint | Description | Authority |
 | :--- | :--- | :--- | :--- |
-| **GET** | `/transactions/{transactionId}` | Admin lookup for a single transaction by ID. | `ADMIN` / `SUPER_ADMIN` |
-| **GET** | `/transactions/me/account/{accountId}` | Merchant views their own account's transaction history. | `MERCHANT` |
-| **GET** | `/transactions/account/{accountId}` | Admin full audit view of all transactions for any account. | `ADMIN` / `SUPER_ADMIN` |
+| **GET** | `/api/v1/transactions/{transactionId}` | Admin lookup for a single transaction by ID. | `ADMIN` / `SUPER_ADMIN` |
+| **GET** | `/api/v1/transactions/me/account/{accountId}` | User views their own account's transaction history. | `USER` |
+| **GET** | `/api/v1/transactions/account/{accountId}` | Admin full audit view of all transactions for any account. | `ADMIN` / `SUPER_ADMIN` |
 
 ---
 
-### 8. Tier Configuration (`/tier-configs`)
+### 8. Tier Configuration (`/api/v1/tier-configs`)
 *Define and manage the transaction limits and fee structures governing each merchant tier.*
 
 | Method | Endpoint | Description | Authority |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/tier-configs` | Create a new tier configuration. | `TIER_UPDATE` |
-| **GET** | `/tier-configs` | List all active tier configurations. | `TIER_READ` |
-| **GET** | `/tier-configs/{tierConfigId}` | Fetch configuration by internal ID. | `TIER_READ` |
-| **GET** | `/tier-configs/tier/{tier}` | Lookup limits and fees by tier name (e.g., `TIER_1`). | `TIER_READ` |
-| **PUT** | `/tier-configs/{tier}` | Update limits or fee percentages for an existing tier. | `TIER_UPDATE` |
+| **POST** | `/api/v1/tier-configs` | Create a new tier configuration. | `TIER_UPDATE` |
+| **GET** | `/api/v1/tier-configs` | List all active tier configurations. | `TIER_READ` |
+| **GET** | `/api/v1/tier-configs/{tierConfigId}` | Fetch configuration by internal ID. | `TIER_READ` |
+| **GET** | `/api/v1/tier-configs/tier/{tier}` | Lookup limits and fees by tier name (e.g., `TIER_1`). | `TIER_READ` |
+| **PUT** | `/api/v1/tier-configs/{tier}` | Update limits or fee percentages for an existing tier. | `TIER_UPDATE` |
 
 ---
 
-### 9. Roles & Permissions (`/roles`, `/permissions`)
+### 9. Roles & Permissions (`/api/v1/roles`, `/api/v1/permissions`)
 *Granular RBAC management for controlling system access levels.*
 
 | Method | Endpoint | Description | Authority |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/roles` | Create a new system role. | `ROLE_CREATE` |
-| **POST** | `/roles/{roleId}/permissions` | Bulk assign permissions to a role. | `PERMISSION_ASSIGN` |
-| **GET** | `/permissions` | List all available system permissions. | `PERMISSION_READ` |
-| **DELETE** | `/roles/{roleId}/permissions` | Bulk revoke permissions from a role. | `PERMISSION_ASSIGN` |
+| **POST** | `/api/v1/roles` | Create a new system role. | `ROLE_CREATE` |
+| **POST** | `/api/v1/roles/{roleId}/permissions` | Bulk assign permissions to a role. | `PERMISSION_ASSIGN` |
+| **GET** | `/api/v1/permissions` | List all available system permissions. | `PERMISSION_READ` |
+| **DELETE** | `/api/v1/roles/{roleId}/permissions` | Bulk revoke permissions from a role. | `PERMISSION_ASSIGN` |
 
 ---
 
