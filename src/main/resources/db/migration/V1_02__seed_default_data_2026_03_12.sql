@@ -97,7 +97,7 @@ INSERT INTO users (
              now(), now()
          );
 
-INSERT INTO tier_config (
+INSERT INTO tier_configs (
     tier,
     daily_transaction_limit,
     single_transaction_limit,

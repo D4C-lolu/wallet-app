@@ -8,7 +8,6 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
 public record TransferRequest(
-        @NotBlank String reference,
         @NotNull Long fromAccountId,
         @NotNull Long toAccountId,
         @NotNull @DecimalMin("0.01") BigDecimal amount,

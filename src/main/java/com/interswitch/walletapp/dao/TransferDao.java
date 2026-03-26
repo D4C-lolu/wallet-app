@@ -39,7 +39,7 @@ public class TransferDao {
             FROM accounts fa
             JOIN accounts ta ON ta.id = :toAccountId AND ta.deleted_at IS NULL
             JOIN merchants m ON m.id = fa.merchant_id AND m.deleted_at IS NULL
-            JOIN tier_config tc ON tc.tier = m.tier
+            JOIN tier_configs tc ON tc.tier = m.tier
             WHERE fa.id = :fromAccountId AND fa.deleted_at IS NULL
             """;
 
@@ -69,7 +69,7 @@ public class TransferDao {
         )).stream().findFirst();
     }
 
-    public Long insert(TransferRequest request, Long createdBy) {
+    public Long insert(TransferRequest request, String reference, Long createdBy) {
         String sql = """
             INSERT INTO transfers (reference, from_account_id, to_account_id, amount,
                 currency, transfer_status, description, created_at, updated_at, created_by)
@@ -78,7 +78,7 @@ public class TransferDao {
             """;
         KeyHolder keyHolder = new GeneratedKeyHolder();
         namedJdbc.update(sql, new MapSqlParameterSource()
-                .addValue("reference", request.reference())
+                .addValue("reference", reference)
                 .addValue("fromAccountId", request.fromAccountId())
                 .addValue("toAccountId", request.toAccountId())
                 .addValue("amount", request.amount())

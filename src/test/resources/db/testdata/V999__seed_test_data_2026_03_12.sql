@@ -94,3 +94,30 @@ INSERT INTO accounts (
 ) VALUES
       ( 1, '1100000001', 'SETTLEMENT', 'NGN', 10000000.0000, 10000000.0000, 'ACTIVE', now(), now()),
       ( 1, '1100000002', 'SETTLEMENT', 'NGN', 0.0000, 0.0000, 'ACTIVE', now(), now());
+
+
+
+-- blacklist merchant 2 (testmerchant@verveguard.com)
+INSERT INTO public.merchant_blacklist (
+    merchant_id, reason, blacklisted_at
+) VALUES (
+             2,
+             'Fraudulent activity detected',
+             now()
+         );
+
+-- third account belonging to merchant 1 (testadmin@verveguard.com)
+INSERT INTO public.accounts (
+    merchant_id, account_number, account_type,
+    currency, balance, ledger_balance, account_status,
+    created_at, updated_at
+) VALUES (
+             1,
+             '1100000003',
+             'SETTLEMENT',
+             'NGN',
+             0.0000,
+             0.0000,
+             'ACTIVE',
+             now(), now()
+         );

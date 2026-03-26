@@ -1,5 +1,7 @@
 package com.interswitch.walletapp.services;
 
+import com.interswitch.walletapp.annotation.FraudChecked;
+import com.interswitch.walletapp.annotation.Idempotent;
 import com.interswitch.walletapp.dao.TransferDao;
 import com.interswitch.walletapp.exceptions.BadRequestException;
 import com.interswitch.walletapp.exceptions.ConflictException;
@@ -33,10 +35,11 @@ public class TransferService {
     private final TransferDao transferDao;
     private final TransactionService transactionService;
 
-    private TransferResponse transfer(TransferRequest request) {
+
+    private TransferResponse transfer(TransferRequest request, String reference) {
         Long createdBy = SecurityUtil.findCurrentUserId().orElse(null);
 
-        TransferValidationResult validationResult = transferDao.getTransferValidation(request.fromAccountId(), request.toAccountId(), request.reference())
+        TransferValidationResult validationResult = transferDao.getTransferValidation(request.fromAccountId(), request.toAccountId(), reference)
                 .orElseThrow(() -> new NotFoundException("One or both accounts not found"));
 
         // Validation checks
@@ -57,7 +60,7 @@ public class TransferService {
         validateLimits(request, validationResult);
 
         // Execution
-        Long transferId = transferDao.insert(request, createdBy);
+        Long transferId = transferDao.insert(request, reference, createdBy);
 
         // Log transaction legs
         transactionService.insertTransaction(request.fromAccountId(), transferId, TransactionType.DEBIT, request.amount(), request.currency(), createdBy);
@@ -93,16 +96,18 @@ public class TransferService {
         }
     }
 
+    @FraudChecked
+    @Idempotent
     @Transactional
-    public TransferResponse transferForSelf(TransferRequest request) {
+    public TransferResponse transferForSelf(TransferRequest request, String reference) {
         if (!transferDao.isMerchantOwnerOfAccount(request.fromAccountId(), SecurityUtil.getCurrentUserId())) {
             throw new ForbiddenException("Account does not belong to your merchant");
         }
 
         try {
-            return transfer(request);
+            return transfer(request, reference);
         } catch (DataIntegrityViolationException e) {
-            log.error("Duplicate transaction detected for reference: {}", request.reference());
+            log.error("Duplicate transaction detected for reference: {}", reference);
             throw new ConflictException("This transfer is already being processed.");
         }
     }

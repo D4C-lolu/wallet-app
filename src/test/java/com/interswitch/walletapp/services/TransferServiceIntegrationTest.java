@@ -1,8 +1,8 @@
 package com.interswitch.walletapp.services;
 
 
+import com.interswitch.walletapp.annotation.DisableFraudDetection;
 import com.interswitch.walletapp.base.BaseIntegrationTest;
-import com.interswitch.walletapp.dao.AccountDao;
 import com.interswitch.walletapp.entities.User;
 import com.interswitch.walletapp.exceptions.BadRequestException;
 import com.interswitch.walletapp.exceptions.ConflictException;
@@ -30,6 +30,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@DisableFraudDetection
 @DisplayName("Transfer Service Integration Tests")
 public class TransferServiceIntegrationTest extends BaseIntegrationTest {
 
@@ -40,10 +41,9 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
-    private AccountDao accountDao;
-
-    @Autowired
     private NamedParameterJdbcTemplate namedJdbc;
+
+    private String reference;
 
     @BeforeEach
     void setupSecurityContext() {
@@ -59,9 +59,8 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
         SecurityContextHolder.clearContext();
     }
 
-    private TransferRequest buildTransferRequest(String reference) {
+    private TransferRequest buildTransferRequest() {
         return new TransferRequest(
-                reference,
                 1L,
                 2L,
                 new BigDecimal("1000.00"),
@@ -74,12 +73,13 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should transfer successfully")
     void shouldTransferSuccessfully() {
-        TransferRequest request = buildTransferRequest("REF-001");
+        reference = "REF-001";
+        TransferRequest request = buildTransferRequest();
 
-        TransferResponse response = transferService.transferForSelf(request);
+        TransferResponse response = transferService.transferForSelf(request,reference);
 
         assertThat(response.id()).isNotNull().isPositive();
-        assertThat(response.reference()).isEqualTo(request.reference());
+        assertThat(response.reference()).isEqualTo(reference);
         assertThat(response.fromAccountId()).isEqualTo(request.fromAccountId());
         assertThat(response.toAccountId()).isEqualTo(request.toAccountId());
         assertThat(response.amount()).isEqualByComparingTo(request.amount());
@@ -89,13 +89,14 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should debit and credit accounts correctly")
     void shouldDebitAndCreditAccountsCorrectly() {
+        reference = "REF-002";
         BigDecimal amount = new BigDecimal("1000.00");
-        TransferRequest request = buildTransferRequest("REF-002");
+        TransferRequest request = buildTransferRequest();
 
         BigDecimal fromBalanceBefore = getAccountBalance(1L);
         BigDecimal toBalanceBefore = getAccountBalance(2L);
 
-        transferService.transferForSelf(request);
+        transferService.transferForSelf(request, reference);
 
         BigDecimal fromBalanceAfter = getAccountBalance(1L);
         BigDecimal toBalanceAfter = getAccountBalance(2L);
@@ -107,10 +108,11 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should fail transfer with duplicate reference")
     void shouldFailTransferWithDuplicateReference() {
-        TransferRequest request = buildTransferRequest("REF-003");
-        transferService.transferForSelf(request);
+        reference = "REF-003";
+        TransferRequest request = buildTransferRequest();
+        transferService.transferForSelf(request, reference);
 
-        assertThatThrownBy(() -> transferService.transferForSelf(request))
+        assertThatThrownBy(() -> transferService.transferForSelf(request, reference))
                 .isInstanceOf(ConflictException.class)
                 .hasMessage("Transfer reference already exists");
     }
@@ -118,8 +120,8 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should fail transfer with insufficient funds")
     void shouldFailTransferWithInsufficientFunds() {
+        reference = "REF-004";
         TransferRequest request = new TransferRequest(
-                "REF-004",
                 1L,
                 2L,
                 new BigDecimal("999999999999.00"),
@@ -128,7 +130,7 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
                 "4111111111111111"
         );
 
-        assertThatThrownBy(() -> transferService.transferForSelf(request))
+        assertThatThrownBy(() -> transferService.transferForSelf(request, reference))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("Insufficient funds");
     }
@@ -143,7 +145,6 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
         );
         SecurityContextHolder.getContext().setAuthentication(auth);
         TransferRequest request = new TransferRequest(
-                "REF-005",
                 1L,
                 2L,
                 new BigDecimal("1000.00"),
@@ -152,21 +153,22 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
                 "4111111111111111"
         );
 
-        assertThatThrownBy(() -> transferService.transferForSelf(request))
+        assertThatThrownBy(() -> transferService.transferForSelf(request, reference))
                 .isInstanceOf(BadRequestException.class);
     }
 
     @Test
     @DisplayName("should transfer for self successfully as merchant")
     void shouldTransferForSelfSuccessfully() {
+        reference = "REF-006";
         User merchantUser = userRepository.findByEmail("demo.merchant@verveguard.com").orElseThrow();
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(new UserPrincipal(merchantUser), null, List.of())
         );
 
-        TransferRequest request = buildTransferRequest("REF-006");
+        TransferRequest request = buildTransferRequest();
 
-        TransferResponse response = transferService.transferForSelf(request);
+        TransferResponse response = transferService.transferForSelf(request, reference);
 
         assertThat(response.transferStatus()).isEqualTo(TransferStatus.SUCCESS);
     }
@@ -174,14 +176,15 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should fail transfer for self when account does not belong to merchant")
     void shouldFailTransferForSelfWhenAccountDoesNotBelongToMerchant() {
+        reference = "REF-007";
         User merchantUser = userRepository.findByEmail("testmerchant@verveguard.com").orElseThrow();
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(new UserPrincipal(merchantUser), null, List.of())
         );
 
-        TransferRequest request = buildTransferRequest("REF-007");
+        TransferRequest request = buildTransferRequest();
 
-        assertThatThrownBy(() -> transferService.transferForSelf(request))
+        assertThatThrownBy(() -> transferService.transferForSelf(request, reference))
                 .isInstanceOf(ForbiddenException.class)
                 .hasMessage("Account does not belong to your merchant");
     }
@@ -189,7 +192,8 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should get transfer by id successfully")
     void shouldGetTransferByIdSuccessfully() {
-        TransferResponse created = transferService.transferForSelf(buildTransferRequest("REF-008"));
+        reference = "REF-008";
+        TransferResponse created = transferService.transferForSelf(buildTransferRequest(), reference);
 
         TransferResponse response = transferService.getTransferById(created.id());
 
@@ -208,7 +212,8 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should get transfers by account paginated")
     void shouldGetTransfersByAccountPaginated() {
-        transferService.transferForSelf(buildTransferRequest("REF-009"));
+        reference = "REF-009";
+        transferService.transferForSelf(buildTransferRequest(), reference);
 
         Page<TransferResponse> page = transferService.getTransfersByAccount(1L, 1, 10);
 

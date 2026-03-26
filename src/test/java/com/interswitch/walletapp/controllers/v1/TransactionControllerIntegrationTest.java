@@ -1,5 +1,6 @@
 package com.interswitch.walletapp.controllers.v1;
 
+import com.interswitch.walletapp.annotation.DisableFraudDetection;
 import com.interswitch.walletapp.base.BaseControllerIntegrationTest;
 import com.interswitch.walletapp.entities.User;
 import com.interswitch.walletapp.models.request.TransferRequest;
@@ -22,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@DisableFraudDetection
 @DisplayName("Transaction Controller Integration Tests")
 public class TransactionControllerIntegrationTest extends BaseControllerIntegrationTest {
 
@@ -50,9 +52,9 @@ public class TransactionControllerIntegrationTest extends BaseControllerIntegrat
                 new UsernamePasswordAuthenticationToken(new UserPrincipal(merchant), null, List.of())
         );
         transferService.transferForSelf(new TransferRequest(
-                "REF-TXN-SETUP", fromAccountId, toAccountId,
+                 fromAccountId, toAccountId,
                 new BigDecimal("1000.00"), "NGN", "Setup transfer", "4111111111111111"
-        ));
+        ), "REF-TXN-SETUP");
         SecurityContextHolder.clearContext();
     }
 

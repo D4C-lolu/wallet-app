@@ -34,6 +34,7 @@ public final class Permissions {
     public static final String ROLE_DELETE       = "role:delete";
     public static final String PERMISSION_READ   = "permission:read";
     public static final String PERMISSION_ASSIGN = "permission:assign";
+    public static final String SYSTEM_MONITOR    = "system:monitor";
 
     private Permissions() {}
 }

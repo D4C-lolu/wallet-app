@@ -15,7 +15,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "tier_config")
+@Table(name = "tier_configs")
 public class TierConfig extends MutableAudit {
     
     @Id

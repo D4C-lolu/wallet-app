@@ -62,7 +62,7 @@ public class AccountDao {
                 tc.max_accounts,
                 COUNT(a.id) AS current_account_count
             FROM merchants m
-            LEFT JOIN tier_config tc ON tc.tier = m.tier
+            LEFT JOIN tier_configs tc ON tc.tier = m.tier
             LEFT JOIN accounts a ON a.merchant_id = m.id AND a.deleted_at IS NULL
             WHERE m.id = :merchantId AND m.deleted_at IS NULL
             GROUP BY m.id, m.kyc_status, m.tier, tc.max_accounts

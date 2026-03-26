@@ -1,5 +1,6 @@
 package com.interswitch.walletapp.services;
 
+import com.interswitch.walletapp.annotation.DisableFraudDetection;
 import com.interswitch.walletapp.base.BaseIntegrationTest;
 import com.interswitch.walletapp.entities.User;
 import com.interswitch.walletapp.exceptions.NotFoundException;
@@ -24,6 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@DisableFraudDetection
 @DisplayName("Transaction Service Integration Tests")
 public class TransactionServiceIntegrationTest extends BaseIntegrationTest {
 
@@ -50,9 +52,8 @@ public class TransactionServiceIntegrationTest extends BaseIntegrationTest {
         SecurityContextHolder.clearContext();
     }
 
-    private TransferRequest buildTransferRequest(String reference) {
+    private TransferRequest buildTransferRequest() {
         return new TransferRequest(
-                reference,
                 1L,
                 2L,
                 new BigDecimal("1000.00"),
@@ -65,7 +66,7 @@ public class TransactionServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should get transaction by id successfully")
     void shouldGetTransactionByIdSuccessfully() {
-        transferService.transferForSelf(buildTransferRequest("REF-TXN-001"));
+        transferService.transferForSelf(buildTransferRequest(),"REF-TXN-001");
 
         Page<TransactionResponse> page = transactionService.getTransactionsByAccount(1L, 1, 10);
         Long transactionId = page.getContent().getFirst().id();
@@ -87,7 +88,7 @@ public class TransactionServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should get transactions by account paginated")
     void shouldGetTransactionsByAccountPaginated() {
-        transferService.transferForSelf(buildTransferRequest("REF-TXN-002"));
+        transferService.transferForSelf(buildTransferRequest(),"REF-TXN-002");
 
         Page<TransactionResponse> page = transactionService.getTransactionsByAccount(1L, 1, 10);
 
@@ -98,7 +99,7 @@ public class TransactionServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should record debit transaction on source account")
     void shouldRecordDebitTransactionOnSourceAccount() {
-        transferService.transferForSelf(buildTransferRequest("REF-TXN-003"));
+        transferService.transferForSelf(buildTransferRequest(),"REF-TXN-003");
 
         Page<TransactionResponse> page = transactionService.getTransactionsByAccount(1L, 1, 10);
 
@@ -111,7 +112,7 @@ public class TransactionServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should record credit transaction on destination account")
     void shouldRecordCreditTransactionOnDestinationAccount() {
-        transferService.transferForSelf(buildTransferRequest("REF-TXN-004"));
+        transferService.transferForSelf(buildTransferRequest(),"REF-TXN-004");
 
         Page<TransactionResponse> page = transactionService.getTransactionsByAccount(2L, 1, 10);
 
@@ -124,8 +125,8 @@ public class TransactionServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should get daily debit sum correctly")
     void shouldGetDailyDebitSumCorrectly() {
-        transferService.transferForSelf(buildTransferRequest("REF-TXN-005"));
-        transferService.transferForSelf(buildTransferRequest("REF-TXN-006"));
+        transferService.transferForSelf(buildTransferRequest(),"REF-TXN-005");
+        transferService.transferForSelf(buildTransferRequest(),"REF-TXN-006");
 
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime startOfDay = now.toLocalDate().atStartOfDay().atOffset(now.getOffset());
@@ -138,7 +139,7 @@ public class TransactionServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should get monthly debit sum correctly")
     void shouldGetMonthlyDebitSumCorrectly() {
-        transferService.transferForSelf(buildTransferRequest("REF-TXN-007"));
+        transferService.transferForSelf(buildTransferRequest(), "REF-TXN-007");
 
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime startOfMonth = now.toLocalDate().withDayOfMonth(1).atStartOfDay().atOffset(now.getOffset());

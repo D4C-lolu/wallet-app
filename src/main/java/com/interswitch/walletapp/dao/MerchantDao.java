@@ -74,7 +74,7 @@ public class MerchantDao {
         SELECT
             (SELECT COUNT(*) FROM merchants WHERE user_id = :userId AND deleted_at IS NULL) > 0 AS merchant_exists,
             (SELECT COUNT(*) FROM users WHERE id = :userId AND deleted_at IS NULL) > 0 AS user_exists,
-            (SELECT COUNT(*) FROM tier_config WHERE tier = :tier) > 0 AS tier_exists
+            (SELECT COUNT(*) FROM tier_configs WHERE tier = :tier) > 0 AS tier_exists
         """;
 
     private static final String UPDATE_STATUS = """
@@ -159,7 +159,7 @@ public class MerchantDao {
     }
 
     public boolean tierExists(String tier) {
-        Integer count = namedJdbc.queryForObject("SELECT COUNT(*) FROM tier_config WHERE tier = :tier",
+        Integer count = namedJdbc.queryForObject("SELECT COUNT(*) FROM tier_configs WHERE tier = :tier",
                 new MapSqlParameterSource("tier", tier), Integer.class);
         return count != null && count > 0;
     }

@@ -1,5 +1,6 @@
 package com.interswitch.walletapp.controllers.v1;
 
+import com.interswitch.walletapp.annotation.Idempotent;
 import com.interswitch.walletapp.constants.Roles;
 import com.interswitch.walletapp.models.request.TransferRequest;
 import com.interswitch.walletapp.models.response.TransferResponse;
@@ -7,6 +8,7 @@ import com.interswitch.walletapp.services.TransferService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -27,8 +29,11 @@ public class TransferController {
     )
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("me")
-    public TransferResponse transfer(@RequestBody @Valid TransferRequest request) {
-        return transferService.transferForSelf(request);
+    public TransferResponse transfer(
+            @RequestHeader("X-Idempotency-Key") @NotBlank String reference,
+            @Valid @RequestBody TransferRequest request
+    ) {
+        return transferService.transferForSelf(request, reference);
     }
 
     @Operation(
