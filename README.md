@@ -1,6 +1,6 @@
-# VervePay API Documentation
+# VerveGuard API Documentation
 
-**VervePay** is a high-performance financial middleware and merchant management platform. It provides a secure, tiered infrastructure for handling merchant lifecycles, card issuance, account management, fund transfers, and granular role-based access control (RBAC).
+**VerveGuard** is a high-performance financial middleware and merchant management platform. It provides a secure, tiered infrastructure for handling merchant lifecycles, card issuance, account management, fund transfers, and granular role-based access control (RBAC).
 
 ---
 
@@ -17,7 +17,7 @@ The project follows a **Layered Architecture**, ensuring high performance and st
 
 ## 💳 The Merchant Tier System
 
-VervePay operates on a progressive trust model with three distinct levels. Movement between tiers is governed by `TierConfig` and KYC verification status.
+VerveGuard operates on a progressive trust model with three distinct levels. Movement between tiers is governed by `TierConfig` and KYC verification status.
 
 1. **TIER_1:** Initial entry level with restricted transaction and account limits.
 2. **TIER_2:** Intermediate level. Requires `KYC_APPROVED` status.
