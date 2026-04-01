@@ -2,6 +2,7 @@ package com.interswitch.walletapp.context;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.interswitch.walletapp.dao.BlacklistDao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,5 +25,9 @@ public class BlacklistCache {
 
     public void evict(Long merchantId) {
         cache.invalidate(merchantId);
+    }
+
+    public CacheStats stats() {
+        return cache.stats();
     }
 }
