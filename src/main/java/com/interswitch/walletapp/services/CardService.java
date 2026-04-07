@@ -31,6 +31,7 @@ import java.util.Set;
 public class CardService {
 
     private final CardDao cardDao;
+    private final FraudAlertService fraudAlertService;
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
             "id", "account_id", "card_number", "card_type",
@@ -97,12 +98,24 @@ public class CardService {
     }
 
     public void blockCard(Long cardId) {
+        blockCard(cardId, false);
+    }
+
+    public void blockCardForFraud(Long cardId) {
+        blockCard(cardId, true);
+    }
+
+    private void blockCard(Long cardId, boolean isFraudRelated) {
         if (!cardDao.exists(cardId)) {
             throw new NotFoundException("Card not found");
         }
 
         Long updatedBy = SecurityUtil.findCurrentUserId().orElse(null);
         cardDao.blockCard(cardId, updatedBy);
+
+        if (isFraudRelated) {
+            fraudAlertService.notifyCardBlockedForFraud(cardId);
+        }
     }
 
     public void blockCardForSelf(Long cardId) {

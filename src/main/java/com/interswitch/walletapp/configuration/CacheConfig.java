@@ -2,6 +2,7 @@ package com.interswitch.walletapp.configuration;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.interswitch.walletapp.models.EmailMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -34,6 +35,14 @@ public class CacheConfig {
     public Cache<Long, Long> userRevocationCache() {
         return Caffeine.newBuilder()
                 .expireAfterWrite(jwtProperties.getRefreshTokenExpiry(), TimeUnit.SECONDS)
+                .build();
+    }
+
+    @Bean
+    public Cache<String, EmailMessage> emailQueueCache() {
+        return Caffeine.newBuilder()
+                .expireAfterWrite(1, TimeUnit.HOURS)
+                .maximumSize(1000)
                 .build();
     }
 }
