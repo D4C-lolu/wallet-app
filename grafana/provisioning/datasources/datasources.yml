@@ -6,18 +6,8 @@ datasources:
     access: proxy
     url: http://prometheus:9090
     isDefault: true
-    basicAuth: true
-    basicAuthUser: admin
-    secureJsonData:
-      basicAuthPassword: admin123
 
   - name: Loki
     type: loki
     access: proxy
     url: http://loki:3100
-    jsonData:
-      derivedFields:
-        - datasourceUid: Prometheus
-          matcherRegex: "traceId=(\\w+)"
-          name: TraceID
-          url: '$${__value.raw}'

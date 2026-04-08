@@ -178,7 +178,7 @@ VerveGuard includes a comprehensive real-time fraud detection engine that evalua
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           FRAUD DETECTION FLOW                               │
+│                           FRAUD DETECTION FLOW                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 
   ┌──────────────┐      ┌───────────────────┐      ┌─────────────────────┐
