@@ -11,17 +11,9 @@ public class BlacklistDao {
 
     private final NamedParameterJdbcTemplate namedJdbc;
 
-    private static final String IS_BLACKLISTED = """
-            SELECT EXISTS (
-                SELECT 1 FROM merchant_blacklist
-                WHERE merchant_id = :merchantId
-                AND lifted_at IS NULL
-            )
-            """;
-
     public boolean isActivelyBlacklisted(Long merchantId) {
         return Boolean.TRUE.equals(namedJdbc.queryForObject(
-                IS_BLACKLISTED,
+                "SELECT sp_blacklist_is_actively_blacklisted(:merchantId)",
                 new MapSqlParameterSource("merchantId", merchantId),
                 Boolean.class
         ));

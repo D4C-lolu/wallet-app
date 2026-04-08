@@ -1,0 +1,3 @@
+basic_auth_users:
+  # admin:admin123 (bcrypt hash)
+  admin: $2y$10$Q5BhBQ8.WQ6kBK/EWkqLs.uQxjqKvOlPqoOZKxXNPNhQm4EqvKP2y

@@ -30,9 +30,9 @@ public class FraudControllerIntegrationTest extends BaseControllerIntegrationTes
         superAdminToken = loginAndGetAccessToken("superadmin@verveguard.com", "Admin123!");
     }
 
-    private FraudEvaluationContext buildContext(Long merchantId, BigDecimal amount) {
+    private FraudEvaluationContext buildContext(String accountNumber, BigDecimal amount) {
         return new FraudEvaluationContext(
-                merchantId,
+                accountNumber,
                 amount,
                 "NGN",
                 "4111111111111111",
@@ -46,7 +46,7 @@ public class FraudControllerIntegrationTest extends BaseControllerIntegrationTes
     void shouldReturnCleanForNormalTransaction() throws Exception {
         String ip = uniqueIp();
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                1L, new BigDecimal("500.00"), "NGN",
+                "0000000000", new BigDecimal("500.00"), "NGN",
                 "4111111111111111", ip, OffsetDateTime.now()
         );
 
@@ -63,9 +63,9 @@ public class FraudControllerIntegrationTest extends BaseControllerIntegrationTes
     @DisplayName("should return BLOCKED for blacklisted merchant")
     void shouldReturnBlockedForBlacklistedMerchant() throws Exception {
         String ip = uniqueIp();
-        Long blacklistedMerchantId = 2L;
+        String blacklistedAccountNumber = "2200000001"; // belongs to blacklisted merchant 2
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                blacklistedMerchantId, new BigDecimal("500.00"), "NGN",
+                blacklistedAccountNumber, new BigDecimal("500.00"), "NGN",
                 "4111111111111111", ip, OffsetDateTime.now()
         );
 
@@ -83,7 +83,7 @@ public class FraudControllerIntegrationTest extends BaseControllerIntegrationTes
     void shouldReturnBlockedForRateLimitedIp() throws Exception {
         String ip = uniqueIp();
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                1L, new BigDecimal("100.00"), "NGN",
+                "0000000000", new BigDecimal("100.00"), "NGN",
                 "4111111111111111", ip, OffsetDateTime.now()
         );
 
@@ -110,7 +110,7 @@ public class FraudControllerIntegrationTest extends BaseControllerIntegrationTes
     void shouldReturnSuspiciousForRoundAmount() throws Exception {
         String ip = uniqueIp();
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                1L, new BigDecimal("5000.00"), "NGN",
+                "0000000000", new BigDecimal("5000.00"), "NGN",
                 "4111111111111111", ip, OffsetDateTime.now()
         );
 
@@ -128,7 +128,7 @@ public class FraudControllerIntegrationTest extends BaseControllerIntegrationTes
     void shouldReturnSuspiciousForAmountExceedingSingleLimit() throws Exception {
         String ip = uniqueIp();
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                1L, new BigDecimal("9999999.00"), "NGN",
+                "0000000000", new BigDecimal("9999999.00"), "NGN",
                 "4111111111111111", ip, OffsetDateTime.now()
         );
 
@@ -146,7 +146,7 @@ public class FraudControllerIntegrationTest extends BaseControllerIntegrationTes
     void shouldReturnSuspiciousForAfterHoursTransaction() throws Exception {
         String ip = uniqueIp();
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                1L, new BigDecimal("100.00"), "NGN",
+                "0000000000", new BigDecimal("100.00"), "NGN",
                 "4111111111111111", ip,
                 OffsetDateTime.now().withHour(2)
         );
@@ -165,7 +165,7 @@ public class FraudControllerIntegrationTest extends BaseControllerIntegrationTes
     void shouldReturnSuspiciousForCardVelocityExceeded() throws Exception {
         String ip = uniqueIp();
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                1L, new BigDecimal("100.00"), "NGN",
+                "0000000000", new BigDecimal("100.00"), "NGN",
                 "4111111111111112", ip,
                 OffsetDateTime.now()
         );
@@ -193,7 +193,7 @@ public class FraudControllerIntegrationTest extends BaseControllerIntegrationTes
     void shouldPersistFraudAttemptToDatabase() throws Exception {
         String ip = uniqueIp();
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                1L, new BigDecimal("500.00"), "NGN",
+                "0000000000", new BigDecimal("500.00"), "NGN",
                 "4111111111111111", ip, OffsetDateTime.now()
         );
 
@@ -213,7 +213,7 @@ public class FraudControllerIntegrationTest extends BaseControllerIntegrationTes
     void shouldRequireAuthOnEvaluate() throws Exception {
         String ip = uniqueIp();
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                1L, new BigDecimal("500.00"), "NGN",
+                "0000000000", new BigDecimal("500.00"), "NGN",
                 "4111111111111111", ip, OffsetDateTime.now()
         );
 

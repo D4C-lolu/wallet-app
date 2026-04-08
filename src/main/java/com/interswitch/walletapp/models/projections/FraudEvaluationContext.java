@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public record FraudEvaluationContext(
-        Long merchantId,
+        String accountNumber,
         BigDecimal amount,
         String currency,
         String cardNumber,

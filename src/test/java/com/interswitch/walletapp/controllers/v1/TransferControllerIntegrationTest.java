@@ -5,9 +5,7 @@ import com.interswitch.walletapp.base.BaseControllerIntegrationTest;
 
 import com.interswitch.walletapp.models.enums.TransferStatus;
 import com.interswitch.walletapp.models.request.TransferRequest;
-import com.interswitch.walletapp.repositories.AccountRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import org.junit.jupiter.api.DisplayName;
@@ -23,23 +21,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("Transfer Controller Integration Tests")
 public class TransferControllerIntegrationTest extends BaseControllerIntegrationTest {
 
-    @Autowired
-    private AccountRepository accountRepository;
-
-    private Long fromAccountId;
-    private Long toAccountId;
+    private static final String FROM_ACCOUNT_NUMBER = "0000000000";
+    private static final String TO_ACCOUNT_NUMBER = "1100000001";
 
     @BeforeEach
     void setup() throws Exception {
         superAdminToken = loginAndGetAccessToken("superadmin@verveguard.com", "Admin123!");
         merchantToken   = loginAndGetAccessToken("demo.merchant@verveguard.com", "Admin123!");
-
-        fromAccountId = accountRepository.findByAccountNumber("0000000000").orElseThrow().getId();
-        toAccountId   = accountRepository.findByAccountNumber("1100000001").orElseThrow().getId();
     }
 
     private TransferRequest buildRequest() {
-        return new TransferRequest( fromAccountId, toAccountId,
+        return new TransferRequest(FROM_ACCOUNT_NUMBER, TO_ACCOUNT_NUMBER,
                 new BigDecimal("1000.00"), "NGN", "Test transfer", "4111111111111111"
         );
     }

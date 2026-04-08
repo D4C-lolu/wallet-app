@@ -9,13 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Repository
@@ -23,77 +20,6 @@ import java.util.Optional;
 public class CardDao {
 
     private final NamedParameterJdbcTemplate namedJdbc;
-
-    private static final String INSERT_CARD = """
-        INSERT INTO cards (card_number, card_hash, account_id, card_type, scheme,
-            expiry_month, expiry_year, card_status, created_at, updated_at, created_by)
-        VALUES (:cardNumber, :cardHash, :accountId, :cardType, :scheme,
-            :expiryMonth, :expiryYear, :cardStatus, now(), now(), :createdBy)
-        """;
-
-    private static final String SELECT_BY_ID = """
-            SELECT * FROM cards WHERE id = :id AND deleted_at IS NULL
-            """;
-
-    private static final String SELECT_BY_ACCOUNT = """
-            SELECT *, COUNT(*) OVER() AS total_count
-            FROM cards WHERE account_id = :accountId AND deleted_at IS NULL
-            ORDER BY %s %s
-            LIMIT :limit OFFSET :offset
-            """;
-
-    private static final String UPDATE_STATUS = """
-            UPDATE cards SET card_status = :status, updated_at = now(), updated_by = :updatedBy
-            WHERE id = :id AND deleted_at IS NULL
-            """;
-
-    private static final String SOFT_DELETE = """
-            UPDATE cards SET deleted_at = now(), deleted_by = :deletedBy, updated_at = now()
-            WHERE id = :id AND deleted_at IS NULL
-            """;
-
-    private static final String MERCHANT_OWNS_CARD = """
-        SELECT EXISTS(
-            SELECT 1 FROM cards c
-            JOIN accounts a ON c.account_id = a.id
-            JOIN merchants m ON a.merchant_id = m.id
-            WHERE c.id = :cardId AND m.user_id = :userId AND c.deleted_at IS NULL
-        )
-        """;
-
-    private static final String BLOCK_CARD = """
-        UPDATE cards SET card_status = 'BLOCKED', updated_at = now(), updated_by = :updatedBy
-        WHERE id = :id AND deleted_at IS NULL AND card_status != 'BLOCKED'
-        """;
-
-    private static final String MERCHANT_ID_AND_ACCOUNT_VALIDATION = """
-            SELECT m.id AS merchant_id
-            FROM merchants m
-            JOIN accounts a ON a.merchant_id = m.id
-            WHERE m.user_id = :userId
-            AND a.id = :accountId
-            AND m.deleted_at IS NULL
-            AND a.deleted_at IS NULL
-        """;
-    private static final String CARD_CREATION_VALIDATION = """
-        SELECT
-            a.id AS account_id,
-            m.id AS merchant_id,
-            m.tier,
-            tc.max_cards,
-            COUNT(c.id) AS current_card_count,
-            (SELECT COUNT(*) FROM cards WHERE card_hash = :cardHash AND deleted_at IS NULL) > 0 AS card_hash_exists
-        FROM accounts a
-        JOIN merchants m ON a.merchant_id = m.id
-        JOIN tier_configs tc ON tc.tier = m.tier
-        LEFT JOIN cards c ON c.account_id = a.id AND c.deleted_at IS NULL
-        WHERE a.id = :accountId AND a.deleted_at IS NULL
-        GROUP BY a.id, m.id, m.tier, tc.max_cards
-    """;
-
-    private static final String EXISTS_CARD = """
-        SELECT COUNT(*) FROM cards WHERE id = :id AND deleted_at IS NULL
-        """;
 
     public Long insert(CreateCardRequest request, String cardHash, String maskedCardNumber, Long createdBy) {
         MapSqlParameterSource params = new MapSqlParameterSource()
@@ -107,50 +33,67 @@ public class CardDao {
                 .addValue("cardStatus", CardStatus.ACTIVE.name())
                 .addValue("createdBy", createdBy);
 
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        namedJdbc.update(INSERT_CARD, params, keyHolder, new String[]{"id"});
-        return Objects.requireNonNull(keyHolder.getKey()).longValue();
+        return namedJdbc.queryForObject(
+                "SELECT sp_card_insert(:cardNumber, :cardHash, :accountId, :cardType, :scheme, :expiryMonth::smallint, :expiryYear::smallint, :cardStatus, :createdBy)",
+                params, Long.class
+        );
     }
 
     public Optional<CardResponse> findById(Long cardId) {
-        return namedJdbc.query(SELECT_BY_ID, new MapSqlParameterSource("id", cardId), cardRowMapper())
-                .stream().findFirst();
+        return namedJdbc.query(
+                "SELECT * FROM sp_card_find_by_id(:id)",
+                new MapSqlParameterSource("id", cardId),
+                cardRowMapper()
+        ).stream().findFirst();
     }
 
     public List<CardResponse> findByAccountWithCount(MapSqlParameterSource params, String sortField, String direction, long[] total) {
-        String query = SELECT_BY_ACCOUNT.formatted(sortField, direction);
-        return namedJdbc.query(query, params, (rs, rowNum) -> {
-            total[0] = rs.getLong("total_count");
-            return cardRowMapper().mapRow(rs, rowNum);
-        });
+        params.addValue("sortField", sortField);
+        params.addValue("sortDirection", direction);
+        return namedJdbc.query(
+                "SELECT * FROM sp_card_find_by_account(:accountId, :limit, :offset, :sortField, :sortDirection)",
+                params, (rs, rowNum) -> {
+                    total[0] = rs.getLong("total_count");
+                    return cardRowMapper().mapRow(rs, rowNum);
+                });
     }
 
     public boolean exists(Long cardId) {
-        Integer count = namedJdbc.queryForObject(EXISTS_CARD, new MapSqlParameterSource("id", cardId), Integer.class);
-        return count != null && count > 0;
+        return Boolean.TRUE.equals(namedJdbc.queryForObject(
+                "SELECT sp_card_exists(:id)",
+                new MapSqlParameterSource("id", cardId),
+                Boolean.class
+        ));
     }
 
     public void blockCard(Long cardId, Long updatedBy) {
-        namedJdbc.update(BLOCK_CARD, new MapSqlParameterSource()
-                .addValue("id", cardId)
-                .addValue("updatedBy", updatedBy));
+        namedJdbc.queryForList(
+                "SELECT sp_card_block(:id, :updatedBy)",
+                new MapSqlParameterSource()
+                        .addValue("id", cardId)
+                        .addValue("updatedBy", updatedBy)
+        );
     }
 
     public boolean isMerchantOwnerOfCard(Long cardId, Long userId) {
-        return Boolean.TRUE.equals(namedJdbc.queryForObject(MERCHANT_OWNS_CARD,
+        return Boolean.TRUE.equals(namedJdbc.queryForObject(
+                "SELECT sp_card_is_merchant_owner(:cardId, :userId)",
                 new MapSqlParameterSource().addValue("cardId", cardId).addValue("userId", userId),
-                Boolean.class));
+                Boolean.class
+        ));
     }
 
     public Optional<MerchantAccountLink> validateMerchantAccountOwnership(Long userId, Long accountId) {
-        return namedJdbc.query(MERCHANT_ID_AND_ACCOUNT_VALIDATION,
+        return namedJdbc.query(
+                "SELECT * FROM sp_card_validate_merchant_account(:userId, :accountId)",
                 new MapSqlParameterSource().addValue("userId", userId).addValue("accountId", accountId),
                 (rs, _) -> new MerchantAccountLink(rs.getLong("merchant_id"))
         ).stream().findFirst();
     }
 
     public Optional<CardValidationResult> getCardCreationValidation(Long accountId, String cardHash) {
-        return namedJdbc.query(CARD_CREATION_VALIDATION,
+        return namedJdbc.query(
+                "SELECT * FROM sp_card_get_creation_validation(:accountId, :cardHash)",
                 new MapSqlParameterSource().addValue("accountId", accountId).addValue("cardHash", cardHash),
                 (rs, _) -> new CardValidationResult(
                         rs.getLong("account_id"),
@@ -163,16 +106,47 @@ public class CardDao {
     }
 
     public void updateStatus(Long cardId, String status, Long updatedBy) {
-        namedJdbc.update(UPDATE_STATUS, new MapSqlParameterSource()
-                .addValue("id", cardId)
-                .addValue("status", status)
-                .addValue("updatedBy", updatedBy));
+        namedJdbc.queryForList(
+                "SELECT sp_card_update_status(:id, :status, :updatedBy)",
+                new MapSqlParameterSource()
+                        .addValue("id", cardId)
+                        .addValue("status", status)
+                        .addValue("updatedBy", updatedBy)
+        );
     }
 
     public void softDelete(Long cardId, Long deletedBy) {
-        namedJdbc.update(SOFT_DELETE, new MapSqlParameterSource()
-                .addValue("id", cardId)
-                .addValue("deletedBy", deletedBy));
+        namedJdbc.queryForList(
+                "SELECT sp_card_soft_delete(:id, :deletedBy)",
+                new MapSqlParameterSource()
+                        .addValue("id", cardId)
+                        .addValue("deletedBy", deletedBy)
+        );
+    }
+
+    public boolean blockByHash(String cardHash) {
+        return namedJdbc.query(
+                "SELECT * FROM sp_card_block_by_hash(:cardHash)",
+                new MapSqlParameterSource("cardHash", cardHash),
+                (rs, _) -> rs.getBoolean("was_blocked")
+        ).stream().findFirst().orElse(false);
+    }
+
+    public Optional<Long> findIdByHash(String cardHash) {
+        Long result = namedJdbc.queryForObject(
+                "SELECT sp_card_find_id_by_hash(:cardHash)",
+                new MapSqlParameterSource("cardHash", cardHash),
+                Long.class
+        );
+        return Optional.ofNullable(result);
+    }
+
+    public boolean isActiveByHash(String cardHash) {
+        return Boolean.TRUE.equals(namedJdbc.queryForObject(
+                "SELECT sp_card_is_active_by_hash(:cardHash)",
+                new MapSqlParameterSource("cardHash", cardHash),
+                Boolean.class
+        ));
     }
 
     private RowMapper<CardResponse> cardRowMapper() {

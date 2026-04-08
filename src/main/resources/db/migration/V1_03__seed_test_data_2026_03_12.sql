@@ -22,6 +22,8 @@ INSERT INTO users (
       ('Test', 'Merchant2', 'testmerchant2@verveguard.com', '444114444444',
        '$2a$10$mRxdXj7YESYMm/DIxn9X9OVXykdCww6ZEUX9a1jrOY2GildUkm4Ji', 'ACTIVE', 3, now(), now()),
       ('Test', 'Merchant3', 'testmerchant3@verveguard.com', '444114444445',
+       '$2a$10$mRxdXj7YESYMm/DIxn9X9OVXykdCww6ZEUX9a1jrOY2GildUkm4Ji', 'ACTIVE', 3, now(), now()),
+      ('Test', 'Merchant4', 'testmerchant4@verveguard.com', '444114444446',
        '$2a$10$mRxdXj7YESYMm/DIxn9X9OVXykdCww6ZEUX9a1jrOY2GildUkm4Ji', 'ACTIVE', 3, now(), now());
 
 
@@ -87,13 +89,34 @@ SELECT
 FROM users
 WHERE email = 'testmerchant2@verveguard.com';
 
+INSERT INTO merchants (
+    user_id,
+    address,
+    kyc_status,
+    merchant_status,
+    tier,
+    created_at,
+    updated_at
+)
+SELECT
+    id,
+    '4 Test Street, Lagos',
+    'APPROVED',
+    'ACTIVE',
+    'TIER_1',
+    NOW(),
+    NOW()
+FROM users
+WHERE email = 'testmerchant4@verveguard.com';
+
 INSERT INTO accounts (
      merchant_id, account_number, account_type,
     currency, balance, ledger_balance, account_status,
     created_at, updated_at
 ) VALUES
       ( 1, '1100000001', 'SETTLEMENT', 'NGN', 10000000.0000, 10000000.0000, 'ACTIVE', now(), now()),
-      ( 1, '1100000002', 'SETTLEMENT', 'NGN', 0.0000, 0.0000, 'ACTIVE', now(), now());
+      ( 1, '1100000002', 'SETTLEMENT', 'NGN', 0.0000, 0.0000, 'ACTIVE', now(), now()),
+      ( 2, '2200000001', 'SETTLEMENT', 'NGN', 10000000.0000, 10000000.0000, 'ACTIVE', now(), now());
 
 
 

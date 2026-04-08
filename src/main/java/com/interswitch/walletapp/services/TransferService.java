@@ -39,8 +39,11 @@ public class TransferService {
     private TransferResponse transfer(TransferRequest request, String reference) {
         Long createdBy = SecurityUtil.findCurrentUserId().orElse(null);
 
-        TransferValidationResult validationResult = transferDao.getTransferValidation(request.fromAccountId(), request.toAccountId(), reference)
+        TransferValidationResult validationResult = transferDao.getTransferValidation(request.fromAccountNumber(), request.toAccountNumber(), reference)
                 .orElseThrow(() -> new NotFoundException("One or both accounts not found"));
+
+        Long fromAccountId = validationResult.fromAccountId();
+        Long toAccountId = validationResult.toAccountId();
 
         // Validation checks
         if (validationResult.referenceExists() > 0) {
@@ -57,18 +60,18 @@ public class TransferService {
         }
 
         // Limit Check
-        validateLimits(request, validationResult);
+        validateLimits(request, validationResult, fromAccountId);
 
         // Execution
-        Long transferId = transferDao.insert(request, reference, createdBy);
+        Long transferId = transferDao.insert(fromAccountId, toAccountId, request, reference, createdBy);
 
         // Log transaction legs
-        transactionService.insertTransaction(request.fromAccountId(), transferId, TransactionType.DEBIT, request.amount(), request.currency(), createdBy);
-        transactionService.insertTransaction(request.toAccountId(), transferId, TransactionType.CREDIT, request.amount(), request.currency(), createdBy);
+        transactionService.insertTransaction(fromAccountId, transferId, TransactionType.DEBIT, request.amount(), request.currency(), createdBy);
+        transactionService.insertTransaction(toAccountId, transferId, TransactionType.CREDIT, request.amount(), request.currency(), createdBy);
 
         // Update balances
-        transferDao.debitAccount(request.fromAccountId(), request.amount());
-        transferDao.creditAccount(request.toAccountId(), request.amount());
+        transferDao.debitAccount(fromAccountId, request.amount());
+        transferDao.creditAccount(toAccountId, request.amount());
 
         // Finalize status
         transferDao.updateStatus(transferId, TransferStatus.SUCCESS.name());
@@ -76,7 +79,7 @@ public class TransferService {
         return getTransferById(transferId);
     }
 
-    private void validateLimits(TransferRequest request, TransferValidationResult validationResult) {
+    private void validateLimits(TransferRequest request, TransferValidationResult validationResult, Long fromAccountId) {
         if (request.amount().compareTo(validationResult.singleLimit()) > 0) {
             throw new BadRequestException("Amount exceeds single transaction limit for your tier");
         }
@@ -85,12 +88,12 @@ public class TransferService {
         OffsetDateTime startOfDay = now.toLocalDate().atStartOfDay().atOffset(now.getOffset());
         OffsetDateTime startOfMonth = now.toLocalDate().withDayOfMonth(1).atStartOfDay().atOffset(now.getOffset());
 
-        BigDecimal dailyTotal = transactionService.getDailyDebitSum(request.fromAccountId(), startOfDay, now);
+        BigDecimal dailyTotal = transactionService.getDailyDebitSum(fromAccountId, startOfDay, now);
         if (dailyTotal.add(request.amount()).compareTo(validationResult.dailyLimit()) > 0) {
             throw new BadRequestException("Amount exceeds daily transaction limit for your tier");
         }
 
-        BigDecimal monthlyTotal = transactionService.getMonthlyDebitSum(request.fromAccountId(), startOfMonth, now);
+        BigDecimal monthlyTotal = transactionService.getMonthlyDebitSum(fromAccountId, startOfMonth, now);
         if (monthlyTotal.add(request.amount()).compareTo(validationResult.monthlyLimit()) > 0) {
             throw new BadRequestException("Amount exceeds monthly transaction limit for your tier");
         }
@@ -100,7 +103,7 @@ public class TransferService {
     @Idempotent
     @Transactional
     public TransferResponse transferForSelf(TransferRequest request, String reference) {
-        if (!transferDao.isMerchantOwnerOfAccount(request.fromAccountId(), SecurityUtil.getCurrentUserId())) {
+        if (!transferDao.isMerchantOwnerOfAccountByNumber(request.fromAccountNumber(), SecurityUtil.getCurrentUserId())) {
             throw new ForbiddenException("Account does not belong to your merchant");
         }
 

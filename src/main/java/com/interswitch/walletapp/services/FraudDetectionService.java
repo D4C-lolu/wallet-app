@@ -25,6 +25,7 @@ public class FraudDetectionService {
 
     private final FraudDao fraudDao;
     private final FraudAttemptLoggerService fraudLogger;
+    private final FraudConsequenceService fraudConsequenceService;
     private final RateLimiterService rateLimiter;
     private final BlacklistCache blacklistCache;
 
@@ -39,16 +40,20 @@ public class FraudDetectionService {
         List<String> flags = new ArrayList<>();
         FraudStatus status = FraudStatus.CLEAN;
 
+        Long merchantId = fraudDao.getMerchantIdByAccount(ctx.accountNumber()).orElse(null);
+
         // Hard blocks
-        if (blacklistCache.isBlacklisted(ctx.merchantId())) {
+        if (merchantId != null && blacklistCache.isBlacklisted(merchantId)) {
             flags.add("MERCHANT_BLACKLISTED");
-            fraudLogger.logAttempt(cardHash, ctx, FraudStatus.BLOCKED, flags);
+            fraudLogger.logAttempt(cardHash, ctx, merchantId, FraudStatus.BLOCKED, flags);
+            applyConsequences(ctx, cardHash, FraudStatus.BLOCKED, flags);
             return FraudStatus.BLOCKED;
         }
 
         if (rateLimiter.isRateLimited(ctx.ipAddress())) {
             flags.add("RATE_LIMITED");
-            fraudLogger.logAttempt(cardHash, ctx, FraudStatus.BLOCKED, flags);
+            fraudLogger.logAttempt(cardHash, ctx, merchantId, FraudStatus.BLOCKED, flags);
+            applyConsequences(ctx, cardHash, FraudStatus.BLOCKED, flags);
             return FraudStatus.BLOCKED;
         }
 
@@ -58,7 +63,7 @@ public class FraudDetectionService {
             status = FraudStatus.SUSPICIOUS;
         }
 
-        if (isAmountExceedsSingleLimit(ctx.merchantId(), ctx.amount())) {
+        if (isAmountExceedsSingleLimitByAccount(ctx.accountNumber(), ctx.amount())) {
             flags.add("EXCEEDS_SINGLE_LIMIT");
             status = FraudStatus.SUSPICIOUS;
         }
@@ -73,8 +78,22 @@ public class FraudDetectionService {
             status = FraudStatus.SUSPICIOUS;
         }
 
-        fraudLogger.logAttempt(cardHash, ctx, status, flags);
+        fraudLogger.logAttempt(cardHash, ctx, merchantId, status, flags);
+
+        // Apply consequences for non-clean statuses
+        if (status != FraudStatus.CLEAN) {
+            applyConsequences(ctx, cardHash, status, flags);
+        }
+
         return status;
+    }
+
+    private void applyConsequences(FraudEvaluationContext ctx, String cardHash, FraudStatus status, List<String> flags) {
+        try {
+            fraudConsequenceService.applyConsequences(ctx, cardHash, status, flags);
+        } catch (Exception e) {
+            log.error("Failed to apply fraud consequences for account: {}", ctx.accountNumber(), e);
+        }
     }
 
     public Page<FraudAttemptResponse> getFraudAttempts(int page, int size) {
@@ -91,6 +110,12 @@ public class FraudDetectionService {
 
     private boolean isAmountExceedsSingleLimit(Long merchantId, BigDecimal amount) {
         return fraudDao.getMerchantSingleLimit(merchantId)
+                .map(limit -> amount.compareTo(limit) > 0)
+                .orElse(false);
+    }
+
+    private boolean isAmountExceedsSingleLimitByAccount(String accountNumber, BigDecimal amount) {
+        return fraudDao.getMerchantSingleLimitByAccount(accountNumber)
                 .map(limit -> amount.compareTo(limit) > 0)
                 .orElse(false);
     }

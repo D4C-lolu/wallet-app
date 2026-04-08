@@ -6,1431 +6,1628 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl",        "value": "http://localhost:8080","type": "string" },
-    { "key": "accessToken",    "value": "",                     "type": "string" },
-    { "key": "refreshToken",   "value": "",                     "type": "string" },
-    { "key": "superAdminEmail","value": "superadmin@verveguard.com", "type": "string" },
-    { "key": "adminEmail",     "value": "testadmin@verveguard.com",  "type": "string" },
-    { "key": "merchantEmail",  "value": "testmerchant@verveguard.com","type": "string" },
-    { "key": "demoMerchantEmail","value": "demo.merchant@verveguard.com","type": "string" },
-    { "key": "defaultPassword","value": "Admin123!",            "type": "string" },
-    { "key": "permissionId",   "value": "",                     "type": "string" },
-    { "key": "roleId",         "value": "",                     "type": "string" },
-    { "key": "userId",         "value": "",                     "type": "string" },
-    { "key": "merchantId",     "value": "",                     "type": "string" },
-    { "key": "accountId",      "value": "",                     "type": "string" },
-    { "key": "cardId",         "value": "",                     "type": "string" },
-    { "key": "transactionId",  "value": "",                     "type": "string" },
-    { "key": "transferRef",    "value": "REF-POSTMAN-001",      "type": "string" },
-    { "key": "fromAccountId",  "value": "",                     "type": "string" },
-    { "key": "toAccountId",    "value": "",                     "type": "string" }
+    { "key": "baseUrl", "value": "http://localhost:8080/api/v1", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+    { "key": "superAdminEmail", "value": "superadmin@verveguard.com", "type": "string" },
+    { "key": "adminEmail", "value": "testadmin@verveguard.com", "type": "string" },
+    { "key": "merchantEmail", "value": "testmerchant@verveguard.com", "type": "string" },
+    { "key": "defaultPassword", "value": "Admin123!", "type": "string" },
+    { "key": "permissionId", "value": "", "type": "string" },
+    { "key": "roleId", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "merchantId", "value": "", "type": "string" },
+    { "key": "accountId", "value": "", "type": "string" },
+    { "key": "cardId", "value": "", "type": "string" },
+    { "key": "transactionId", "value": "", "type": "string" },
+    { "key": "transferId", "value": "", "type": "string" },
+    { "key": "tierConfigId", "value": "", "type": "string" },
+    { "key": "fromAccountNumber", "value": "", "type": "string" },
+    { "key": "toAccountNumber", "value": "", "type": "string" }
   ],
   "item": [
-
     {
       "name": "Auth",
       "item": [
-
         {
-          "name": "Login",
-          "item": [
+          "name": "POST /auth/login",
+          "event": [
             {
-              "name": "Login – success (admin)",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 200) {",
-                      "  const body = pm.response.json();",
-                      "  pm.collectionVariables.set('accessToken',  body.data.accessToken);",
-                      "  pm.collectionVariables.set('refreshToken', body.data.refreshToken);",
-                      "  pm.test('status 200', () => pm.response.to.have.status(200));",
-                      "  pm.test('has accessToken',  () => pm.expect(body.data.accessToken).to.not.be.empty);",
-                      "  pm.test('has refreshToken', () => pm.expect(body.data.refreshToken).to.not.be.empty);",
-                      "  pm.test('message is success', () => pm.expect(body.message).to.eql('success'));",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{defaultPassword}}\"\n}"
-                },
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
-              }
-            },
-            {
-              "name": "Login – wrong password (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));","pm.test('error message', () => pm.expect(pm.response.json().errorMessage).to.eql('Invalid email or password'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"WrongPassword!\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
-              }
-            },
-            {
-              "name": "Login – non-existent email (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"email\": \"nobody@verveguard.com\",\n  \"password\": \"{{defaultPassword}}\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
-              }
-            },
-            {
-              "name": "Login – suspended user (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));","pm.test('account not accessible', () => pm.expect(pm.response.json().errorMessage).to.eql('Account is not accessible'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"email\": \"suspended@verveguard.com\",\n  \"password\": \"{{defaultPassword}}\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
-              }
-            },
-            {
-              "name": "Login – inactive user (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"email\": \"deleted@verveguard.com\",\n  \"password\": \"{{defaultPassword}}\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
-              }
-            },
-            {
-              "name": "Login – blank email (400)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 400', () => pm.response.to.have.status(400));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"email\": \"\",\n  \"password\": \"{{defaultPassword}}\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
-              }
-            },
-            {
-              "name": "Login – invalid email format (400)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 400', () => pm.response.to.have.status(400));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"email\": \"notanemail\",\n  \"password\": \"{{defaultPassword}}\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
-              }
-            },
-            {
-              "name": "Login – blank password (400)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 400', () => pm.response.to.have.status(400));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
-              }
-            }
-          ]
-        },
-
-        {
-          "name": "Logout",
-          "item": [
-            {
-              "name": "Logout – success",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [
-                  { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-                  { "key": "Refresh-Token",  "value": "{{refreshToken}}" }
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has accessToken', () => pm.expect(pm.response.json().data.accessToken).to.not.be.empty);",
+                  "pm.test('Response has refreshToken', () => pm.expect(pm.response.json().data.refreshToken).to.not.be.empty);",
+                  "pm.test('Message is success', () => pm.expect(pm.response.json().message).to.eql('success'));",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.data.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.data.refreshToken);",
+                  "}"
                 ],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/logout", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","logout"] }
-              }
-            },
-            {
-              "name": "Logout – missing Authorization (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Refresh-Token", "value": "sometoken" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/logout", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","logout"] }
-              }
-            },
-            {
-              "name": "Logout – missing Refresh-Token (400)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 400', () => pm.response.to.have.status(400));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/logout", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","logout"] }
+                "type": "text/javascript"
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{defaultPassword}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
         },
-
         {
-          "name": "Logout All",
-          "item": [
+          "name": "POST /auth/refresh",
+          "event": [
             {
-              "name": "Logout All – success",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/logout-all", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","logout-all"] }
-              }
-            },
-            {
-              "name": "Logout All – missing Authorization (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/logout-all", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","logout-all"] }
-              }
-            },
-            {
-              "name": "Logout All – invalid token (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer invalid.token.here" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/logout-all", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","logout-all"] }
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has new accessToken', () => pm.expect(pm.response.json().data.accessToken).to.not.be.empty);",
+                  "pm.test('Response has new refreshToken', () => pm.expect(pm.response.json().data.refreshToken).to.not.be.empty);",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.data.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.data.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Refresh-Token", "value": "{{refreshToken}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth", "refresh"] }
+          }
         },
-
         {
-          "name": "Refresh",
-          "item": [
+          "name": "POST /auth/logout",
+          "event": [
             {
-              "name": "Refresh – success",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 200) {",
-                      "  const body = pm.response.json();",
-                      "  pm.collectionVariables.set('accessToken',  body.data.accessToken);",
-                      "  pm.collectionVariables.set('refreshToken', body.data.refreshToken);",
-                      "  pm.test('status 200', () => pm.response.to.have.status(200));",
-                      "  pm.test('has new accessToken',  () => pm.expect(body.data.accessToken).to.not.be.empty);",
-                      "  pm.test('has new refreshToken', () => pm.expect(body.data.refreshToken).to.not.be.empty);",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Refresh-Token", "value": "{{refreshToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","refresh"] }
-              }
-            },
-            {
-              "name": "Refresh – invalid token (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Refresh-Token", "value": "invalid.token.here" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","refresh"] }
-              }
-            },
-            {
-              "name": "Refresh – missing header (400)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 400', () => pm.response.to.have.status(400));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","refresh"] }
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Refresh-Token", "value": "{{refreshToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] }
+          }
+        },
+        {
+          "name": "POST /auth/logout-all",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/logout-all", "host": ["{{baseUrl}}"], "path": ["auth", "logout-all"] }
+          }
         }
-
       ]
     },
-
     {
-      "name": "Admin",
+      "name": "Users",
       "item": [
-
         {
-          "name": "Users",
-          "item": [
+          "name": "POST /users",
+          "event": [
             {
-              "name": "Create user – success",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 201) {",
-                      "  pm.collectionVariables.set('userId', pm.response.json().data.id);",
-                      "  pm.test('status 201', () => pm.response.to.have.status(201));",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"firstname\": \"John\",\n  \"lastname\": \"Doe\",\n  \"middlename\": null,\n  \"email\": \"john.doe@test.com\",\n  \"phone\": \"55555555555\",\n  \"password\": \"{{defaultPassword}}\",\n  \"roleId\": {{roleId}}\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/users", "host": ["{{baseUrl}}"], "path": ["api","v1","users"] }
-              }
-            },
-            {
-              "name": "Create user – merchant forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"firstname\": \"John\",\n  \"lastname\": \"Doe\",\n  \"middlename\": null,\n  \"email\": \"john.doe2@test.com\",\n  \"phone\": \"55555555556\",\n  \"password\": \"{{defaultPassword}}\",\n  \"roleId\": {{roleId}}\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/users", "host": ["{{baseUrl}}"], "path": ["api","v1","users"] }
-              }
-            },
-            {
-              "name": "Create user – unauthenticated (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"firstname\": \"John\",\n  \"lastname\": \"Doe\",\n  \"middlename\": null,\n  \"email\": \"john.doe3@test.com\",\n  \"phone\": \"55555555557\",\n  \"password\": \"{{defaultPassword}}\",\n  \"roleId\": {{roleId}}\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/users", "host": ["{{baseUrl}}"], "path": ["api","v1","users"] }
-              }
-            },
-            {
-              "name": "Create user – invalid body (400)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 400', () => pm.response.to.have.status(400));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"firstname\": \"\",\n  \"lastname\": \"\",\n  \"email\": \"notanemail\",\n  \"phone\": \"\",\n  \"password\": \"{{defaultPassword}}\",\n  \"roleId\": null\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/users", "host": ["{{baseUrl}}"], "path": ["api","v1","users"] }
-              }
-            },
-            {
-              "name": "Get all users",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('data is array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/users", "host": ["{{baseUrl}}"], "path": ["api","v1","users"] }
-              }
-            },
-            {
-              "name": "Get all users – merchant forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/users", "host": ["{{baseUrl}}"], "path": ["api","v1","users"] }
-              }
-            },
-            {
-              "name": "Get user by id",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('id matches', () => pm.expect(String(pm.response.json().data.id)).to.eql(pm.collectionVariables.get('userId')));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","users","{{userId}}"] }
-              }
-            },
-            {
-              "name": "Get user by id – not found (404)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 404', () => pm.response.to.have.status(404));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/users/9223372036854775807", "host": ["{{baseUrl}}"], "path": ["api","v1","users","9223372036854775807"] }
-              }
-            },
-            {
-              "name": "Update user",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PUT",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"firstname\": \"Updated\",\n  \"lastname\": \"Name\",\n  \"middlename\": null,\n  \"phone\": \"55555555555\",\n  \"email\": \"john.doe@test.com\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","users","{{userId}}"] }
-              }
-            },
-            {
-              "name": "Change user status",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PATCH",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/users/{{userId}}/status?status=SUSPENDED", "host": ["{{baseUrl}}"], "path": ["api","v1","users","{{userId}}","status"], "query": [{ "key": "status", "value": "SUSPENDED" }] }
-              }
-            },
-            {
-              "name": "Change user role",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PATCH",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/users/{{userId}}/role?roleId={{roleId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","users","{{userId}}","role"], "query": [{ "key": "roleId", "value": "{{roleId}}" }] }
-              }
-            },
-            {
-              "name": "Change password",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PATCH",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"{{defaultPassword}}\",\n  \"newPassword\": \"NewPassword123!\",\n  \"confirmPassword\": \"NewPassword123!\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/users/{{userId}}/password", "host": ["{{baseUrl}}"], "path": ["api","v1","users","{{userId}}","password"] }
-              }
-            },
-            {
-              "name": "Delete user – merchant forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "DELETE",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","users","{{userId}}"] }
-              }
-            },
-            {
-              "name": "Delete user – success",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "DELETE",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","users","{{userId}}"] }
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has user id', () => pm.expect(pm.response.json().data.id).to.be.a('number'));",
+                  "pm.test('Email matches request', () => pm.expect(pm.response.json().data.email).to.include('@'));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('userId', pm.response.json().data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstname\": \"Test\",\n  \"lastname\": \"User\",\n  \"othername\": null,\n  \"email\": \"test.user.{{$timestamp}}@test.com\",\n  \"phone\": \"{{$randomInt}}55555\",\n  \"password\": \"{{defaultPassword}}\",\n  \"roleId\": {{roleId}}\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] }
+          }
         },
-
         {
-          "name": "Roles",
-          "item": [
+          "name": "GET /users",
+          "event": [
             {
-              "name": "Create role – success",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 201) {",
-                      "  pm.collectionVariables.set('roleId', pm.response.json().data.id);",
-                      "  pm.test('status 201', () => pm.response.to.have.status(201));",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"name\": \"NEW_ROLE\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/roles", "host": ["{{baseUrl}}"], "path": ["api","v1","roles"] }
-              }
-            },
-            {
-              "name": "Create role – conflict (409)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 409', () => pm.response.to.have.status(409));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"name\": \"ADMIN\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/roles", "host": ["{{baseUrl}}"], "path": ["api","v1","roles"] }
-              }
-            },
-            {
-              "name": "Create role – merchant forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"name\": \"NEW_ROLE_2\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/roles", "host": ["{{baseUrl}}"], "path": ["api","v1","roles"] }
-              }
-            },
-            {
-              "name": "Create role – unauthenticated (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"name\": \"NEW_ROLE_3\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/roles", "host": ["{{baseUrl}}"], "path": ["api","v1","roles"] }
-              }
-            },
-            {
-              "name": "Get all roles",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('content is array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/roles", "host": ["{{baseUrl}}"], "path": ["api","v1","roles"] }
-              }
-            },
-            {
-              "name": "Get all roles – merchant forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/roles", "host": ["{{baseUrl}}"], "path": ["api","v1","roles"] }
-              }
-            },
-            {
-              "name": "Get role by id",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","roles","{{roleId}}"] }
-              }
-            },
-            {
-              "name": "Get role by id – not found (404)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 404', () => pm.response.to.have.status(404));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/roles/9999", "host": ["{{baseUrl}}"], "path": ["api","v1","roles","9999"] }
-              }
-            },
-            {
-              "name": "Assign permissions to role",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"permissionIds\": [{{permissionId}}]\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}/permissions", "host": ["{{baseUrl}}"], "path": ["api","v1","roles","{{roleId}}","permissions"] }
-              }
-            },
-            {
-              "name": "Assign permissions – admin forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"permissionIds\": [{{permissionId}}]\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}/permissions", "host": ["{{baseUrl}}"], "path": ["api","v1","roles","{{roleId}}","permissions"] }
-              }
-            },
-            {
-              "name": "Revoke permissions from role",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "DELETE",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"permissionIds\": [{{permissionId}}]\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}/permissions", "host": ["{{baseUrl}}"], "path": ["api","v1","roles","{{roleId}}","permissions"] }
-              }
-            },
-            {
-              "name": "Assign permissions – empty ids (400)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 400', () => pm.response.to.have.status(400));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"permissionIds\": []\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}/permissions", "host": ["{{baseUrl}}"], "path": ["api","v1","roles","{{roleId}}","permissions"] }
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has content array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));",
+                  "pm.test('Response has pagination info', () => pm.expect(pm.response.json().data.totalElements).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/users?page=1&size=10&sortField=created_at&sortDirection=DESC",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "10" },
+                { "key": "sortField", "value": "created_at" },
+                { "key": "sortDirection", "value": "DESC" }
+              ]
+            }
+          }
         },
-
         {
-          "name": "Permissions",
-          "item": [
+          "name": "GET /users/{userId}",
+          "event": [
             {
-              "name": "Create permission – success",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 201) {",
-                      "  pm.collectionVariables.set('permissionId', pm.response.json().data.id);",
-                      "  pm.test('status 201', () => pm.response.to.have.status(201));",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"name\": \"new:permission\",\n  \"description\": \"A new permission\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/permissions", "host": ["{{baseUrl}}"], "path": ["api","v1","permissions"] }
-              }
-            },
-            {
-              "name": "Create permission – conflict (409)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 409', () => pm.response.to.have.status(409));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"name\": \"user:read\",\n  \"description\": \"duplicate\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/permissions", "host": ["{{baseUrl}}"], "path": ["api","v1","permissions"] }
-              }
-            },
-            {
-              "name": "Create permission – merchant forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"name\": \"new:permission2\",\n  \"description\": \"desc\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/permissions", "host": ["{{baseUrl}}"], "path": ["api","v1","permissions"] }
-              }
-            },
-            {
-              "name": "Create permission – unauthenticated (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"name\": \"new:permission3\",\n  \"description\": \"desc\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/permissions", "host": ["{{baseUrl}}"], "path": ["api","v1","permissions"] }
-              }
-            },
-            {
-              "name": "Get all permissions",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/permissions", "host": ["{{baseUrl}}"], "path": ["api","v1","permissions"] }
-              }
-            },
-            {
-              "name": "Get all permissions – merchant forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/permissions", "host": ["{{baseUrl}}"], "path": ["api","v1","permissions"] }
-              }
-            },
-            {
-              "name": "Get permission by id",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/permissions/{{permissionId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","permissions","{{permissionId}}"] }
-              }
-            },
-            {
-              "name": "Get permission by id – not found (404)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 404', () => pm.response.to.have.status(404));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/permissions/9999", "host": ["{{baseUrl}}"], "path": ["api","v1","permissions","9999"] }
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has user data', () => pm.expect(pm.response.json().data.id).to.be.a('number'));",
+                  "pm.test('User id matches request', () => pm.expect(String(pm.response.json().data.id)).to.eql(pm.collectionVariables.get('userId')));"
+                ],
+                "type": "text/javascript"
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] }
+          }
         },
-
         {
-          "name": "Tier Configs",
-          "item": [
+          "name": "PUT /users/{userId}",
+          "event": [
             {
-              "name": "Get all tier configs",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('3 tiers', () => pm.expect(pm.response.json().data.length).to.eql(3));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/tier-configs", "host": ["{{baseUrl}}"], "path": ["api","v1","tier-configs"] }
-              }
-            },
-            {
-              "name": "Get tier config by tier",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('tier is TIER_1', () => pm.expect(pm.response.json().data.tier).to.eql('TIER_1'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/tier-configs/tier/TIER_1", "host": ["{{baseUrl}}"], "path": ["api","v1","tier-configs","tier","TIER_1"] }
-              }
-            },
-            {
-              "name": "Update tier config – success",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PUT",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"dailyTransactionLimit\": 200000.0,\n  \"singleTransactionLimit\": 20000.0,\n  \"monthlyTransactionLimit\": 2000000.0,\n  \"maxCards\": 3,\n  \"maxAccounts\": 2\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/tier-configs/TIER_1", "host": ["{{baseUrl}}"], "path": ["api","v1","tier-configs","TIER_1"] }
-              }
-            },
-            {
-              "name": "Update tier config – merchant forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PUT",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"dailyTransactionLimit\": 200000.0,\n  \"singleTransactionLimit\": 20000.0,\n  \"monthlyTransactionLimit\": 2000000.0,\n  \"maxCards\": 3,\n  \"maxAccounts\": 2\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/tier-configs/TIER_1", "host": ["{{baseUrl}}"], "path": ["api","v1","tier-configs","TIER_1"] }
-              }
-            },
-            {
-              "name": "Get tier configs – unauthenticated (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/api/v1/tier-configs", "host": ["{{baseUrl}}"], "path": ["api","v1","tier-configs"] }
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Firstname is updated', () => pm.expect(pm.response.json().data.firstname).to.eql('Updated'));"
+                ],
+                "type": "text/javascript"
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstname\": \"Updated\",\n  \"lastname\": \"Name\",\n  \"othername\": null,\n  \"email\": \"updated.user@test.com\",\n  \"phone\": \"12345678901\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "PATCH /users/{userId}/status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}/status?status=SUSPENDED",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}", "status"],
+              "query": [{ "key": "status", "value": "SUSPENDED" }]
+            }
+          }
+        },
+        {
+          "name": "PATCH /users/{userId}/role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}/role?roleId={{roleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}", "role"],
+              "query": [{ "key": "roleId", "value": "{{roleId}}" }]
+            }
+          }
+        },
+        {
+          "name": "PATCH /users/{userId}/password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{defaultPassword}}\",\n  \"newPassword\": \"NewPassword123!\",\n  \"confirmPassword\": \"NewPassword123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}/password", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}", "password"] }
+          }
+        },
+        {
+          "name": "DELETE /users/{userId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] }
+          }
         }
-
       ]
     },
-
     {
-      "name": "Merchant",
+      "name": "Roles",
       "item": [
-
         {
-          "name": "Merchants",
-          "item": [
+          "name": "POST /roles",
+          "event": [
             {
-              "name": "Register new merchant (public)",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 201) {",
-                      "  pm.collectionVariables.set('merchantId', pm.response.json().data.id);",
-                      "  pm.test('status 201', () => pm.response.to.have.status(201));",
-                      "  pm.test('KYC PENDING', () => pm.expect(pm.response.json().data.kycStatus).to.eql('PENDING'));",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"firstname\": \"New\",\n  \"lastname\": \"Merchant\",\n  \"middlename\": null,\n  \"email\": \"newmerchant@test.com\",\n  \"phone\": \"88888888888\",\n  \"password\": \"{{defaultPassword}}\",\n  \"address\": \"789 New Street\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/register", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","register"] }
-              }
-            },
-            {
-              "name": "Register – duplicate email (409)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 409', () => pm.response.to.have.status(409));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"firstname\": \"New\",\n  \"lastname\": \"Merchant\",\n  \"middlename\": null,\n  \"email\": \"{{merchantEmail}}\",\n  \"phone\": \"88888888888\",\n  \"password\": \"{{defaultPassword}}\",\n  \"address\": \"789 New Street\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/register", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","register"] }
-              }
-            },
-            {
-              "name": "Register – invalid body (400)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 400', () => pm.response.to.have.status(400));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"firstname\": \"\",\n  \"lastname\": \"\",\n  \"email\": \"notanemail\",\n  \"phone\": \"\",\n  \"password\": \"\",\n  \"address\": null\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/register", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","register"] }
-              }
-            },
-            {
-              "name": "Self-register existing user as merchant",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 201', () => pm.response.to.have.status(201));","pm.test('KYC PENDING', () => pm.expect(pm.response.json().data.kycStatus).to.eql('PENDING'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/self-register?address=123 Self Street", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","self-register"], "query": [{ "key": "address", "value": "123 Self Street" }] }
-              }
-            },
-            {
-              "name": "Self-register – unauthenticated (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/self-register?address=123 Self Street", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","self-register"], "query": [{ "key": "address", "value": "123 Self Street" }] }
-              }
-            },
-            {
-              "name": "Self-register – already has merchant (409)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 409', () => pm.response.to.have.status(409));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/self-register?address=123 Self Street", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","self-register"], "query": [{ "key": "address", "value": "123 Self Street" }] }
-              }
-            },
-            {
-              "name": "Create merchant (admin)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 201', () => pm.response.to.have.status(201));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"userId\": {{userId}},\n  \"address\": \"123 Test Street\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants"] }
-              }
-            },
-            {
-              "name": "Create merchant – merchant forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"userId\": {{userId}},\n  \"address\": \"123 Test Street\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants"] }
-              }
-            },
-            {
-              "name": "Create merchant – already exists (409)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 409', () => pm.response.to.have.status(409));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"userId\": {{userId}},\n  \"address\": \"123 Test Street\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants"] }
-              }
-            },
-            {
-              "name": "Get all merchants",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('content is array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants"] }
-              }
-            },
-            {
-              "name": "Get merchant by id",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/{{merchantId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","{{merchantId}}"] }
-              }
-            },
-            {
-              "name": "Get merchant by id – not found (404)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 404', () => pm.response.to.have.status(404));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/9223372036854775807", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","9223372036854775807"] }
-              }
-            },
-            {
-              "name": "Update merchant",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PUT",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"address\": \"456 Updated Street\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/{{merchantId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","{{merchantId}}"] }
-              }
-            },
-            {
-              "name": "Update KYC status",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('KYC APPROVED', () => pm.expect(pm.response.json().data.kycStatus).to.eql('APPROVED'));","pm.test('merchant ACTIVE', () => pm.expect(pm.response.json().data.merchantStatus).to.eql('ACTIVE'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PATCH",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/{{merchantId}}/kyc?kycStatus=APPROVED", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","{{merchantId}}","kyc"], "query": [{ "key": "kycStatus", "value": "APPROVED" }] }
-              }
-            },
-            {
-              "name": "Upgrade tier",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('tier is TIER_2', () => pm.expect(pm.response.json().data.tier).to.eql('TIER_2'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PATCH",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/{{merchantId}}/tier/upgrade", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","{{merchantId}}","tier","upgrade"] }
-              }
-            },
-            {
-              "name": "Downgrade tier",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('tier is TIER_1', () => pm.expect(pm.response.json().data.tier).to.eql('TIER_1'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PATCH",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/{{merchantId}}/tier/downgrade", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","{{merchantId}}","tier","downgrade"] }
-              }
-            },
-            {
-              "name": "Update merchant status",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PATCH",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/{{merchantId}}/status?status=SUSPENDED", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","{{merchantId}}","status"], "query": [{ "key": "status", "value": "SUSPENDED" }] }
-              }
-            },
-            {
-              "name": "Delete merchant – merchant forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "DELETE",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/{{merchantId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","{{merchantId}}"] }
-              }
-            },
-            {
-              "name": "Delete merchant – success",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "DELETE",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants/{{merchantId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants","{{merchantId}}"] }
-              }
-            },
-            {
-              "name": "Get merchants – unauthenticated (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/api/v1/merchants", "host": ["{{baseUrl}}"], "path": ["api","v1","merchants"] }
-              }
-            }
-          ]
-        },
-
-        {
-          "name": "Accounts",
-          "item": [
-            {
-              "name": "Create account (admin)",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 201) {",
-                      "  pm.collectionVariables.set('accountId', pm.response.json().data.id);",
-                      "  pm.test('status 201', () => pm.response.to.have.status(201));",
-                      "  pm.test('status ACTIVE', () => pm.expect(pm.response.json().data.accountStatus).to.eql('ACTIVE'));",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"merchantId\": {{merchantId}},\n  \"accountType\": \"WALLET\",\n  \"currency\": \"NGN\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/accounts", "host": ["{{baseUrl}}"], "path": ["api","v1","accounts"] }
-              }
-            },
-            {
-              "name": "Create account – merchant forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"merchantId\": 1,\n  \"accountType\": \"WALLET\",\n  \"currency\": \"NGN\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/accounts", "host": ["{{baseUrl}}"], "path": ["api","v1","accounts"] }
-              }
-            },
-            {
-              "name": "Create account for self (merchant)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 201', () => pm.response.to.have.status(201));","pm.test('status ACTIVE', () => pm.expect(pm.response.json().data.accountStatus).to.eql('ACTIVE'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"accountType\": \"WALLET\",\n  \"currency\": \"NGN\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/accounts/me", "host": ["{{baseUrl}}"], "path": ["api","v1","accounts","me"] }
-              }
-            },
-            {
-              "name": "Create account for self – admin forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"accountType\": \"WALLET\",\n  \"currency\": \"NGN\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/accounts/me", "host": ["{{baseUrl}}"], "path": ["api","v1","accounts","me"] }
-              }
-            },
-            {
-              "name": "Get account by id",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/accounts/{{accountId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","accounts","{{accountId}}"] }
-              }
-            },
-            {
-              "name": "Get account by id – not found (404)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 404', () => pm.response.to.have.status(404));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/accounts/9223372036854775807", "host": ["{{baseUrl}}"], "path": ["api","v1","accounts","9223372036854775807"] }
-              }
-            },
-            {
-              "name": "Get accounts by merchant",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('content is array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/accounts/merchant/{{merchantId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","accounts","merchant","{{merchantId}}"] }
-              }
-            },
-            {
-              "name": "Update account status",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PATCH",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/accounts/{{accountId}}/status?status=SUSPENDED", "host": ["{{baseUrl}}"], "path": ["api","v1","accounts","{{accountId}}","status"], "query": [{ "key": "status", "value": "SUSPENDED" }] }
-              }
-            },
-            {
-              "name": "Delete account – success",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "DELETE",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/accounts/{{accountId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","accounts","{{accountId}}"] }
-              }
-            },
-            {
-              "name": "Get account – unauthenticated (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/api/v1/accounts/{{accountId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","accounts","{{accountId}}"] }
-              }
-            }
-          ]
-        },
-
-        {
-          "name": "Cards",
-          "item": [
-            {
-              "name": "Create card (admin)",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 201) {",
-                      "  pm.collectionVariables.set('cardId', pm.response.json().data.id);",
-                      "  pm.test('status 201', () => pm.response.to.have.status(201));",
-                      "  pm.test('card ACTIVE', () => pm.expect(pm.response.json().data.cardStatus).to.eql('ACTIVE'));",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"accountId\": {{accountId}},\n  \"cardNumber\": \"4111222233334444\",\n  \"cardType\": \"VIRTUAL\",\n  \"scheme\": \"VISA\",\n  \"expiryMonth\": 12,\n  \"expiryYear\": 3028\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/cards", "host": ["{{baseUrl}}"], "path": ["api","v1","cards"] }
-              }
-            },
-            {
-              "name": "Create card – merchant forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"accountId\": {{accountId}},\n  \"cardNumber\": \"4111222233335555\",\n  \"cardType\": \"VIRTUAL\",\n  \"scheme\": \"VISA\",\n  \"expiryMonth\": 12,\n  \"expiryYear\": 3028\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/cards", "host": ["{{baseUrl}}"], "path": ["api","v1","cards"] }
-              }
-            },
-            {
-              "name": "Create card for self (merchant)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 201', () => pm.response.to.have.status(201));","pm.test('card ACTIVE', () => pm.expect(pm.response.json().data.cardStatus).to.eql('ACTIVE'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"accountId\": {{accountId}},\n  \"cardNumber\": \"4111222233336666\",\n  \"cardType\": \"VIRTUAL\",\n  \"scheme\": \"VISA\",\n  \"expiryMonth\": 12,\n  \"expiryYear\": 3028\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/cards/me", "host": ["{{baseUrl}}"], "path": ["api","v1","cards","me"] }
-              }
-            },
-            {
-              "name": "Create card for self – admin forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"accountId\": {{accountId}},\n  \"cardNumber\": \"4111222233337777\",\n  \"cardType\": \"VIRTUAL\",\n  \"scheme\": \"VISA\",\n  \"expiryMonth\": 12,\n  \"expiryYear\": 3028\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/cards/me", "host": ["{{baseUrl}}"], "path": ["api","v1","cards","me"] }
-              }
-            },
-            {
-              "name": "Get card by id",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/cards/{{cardId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","cards","{{cardId}}"] }
-              }
-            },
-            {
-              "name": "Get card by id – not found (404)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 404', () => pm.response.to.have.status(404));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/cards/9223372036854775807", "host": ["{{baseUrl}}"], "path": ["api","v1","cards","9223372036854775807"] }
-              }
-            },
-            {
-              "name": "Get cards by account",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('content is array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/cards/account/{{accountId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","cards","account","{{accountId}}"] }
-              }
-            },
-            {
-              "name": "Update card status",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('card BLOCKED', () => pm.expect(pm.response.json().data.cardStatus).to.eql('BLOCKED'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PATCH",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/cards/{{cardId}}/status?status=BLOCKED", "host": ["{{baseUrl}}"], "path": ["api","v1","cards","{{cardId}}","status"], "query": [{ "key": "status", "value": "BLOCKED" }] }
-              }
-            },
-            {
-              "name": "Block card (admin)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PATCH",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/cards/{{cardId}}/block", "host": ["{{baseUrl}}"], "path": ["api","v1","cards","{{cardId}}","block"] }
-              }
-            },
-            {
-              "name": "Block card for self (merchant)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PATCH",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/cards/{{cardId}}/block/me", "host": ["{{baseUrl}}"], "path": ["api","v1","cards","{{cardId}}","block","me"] }
-              }
-            },
-            {
-              "name": "Block card for self – not owner (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "PATCH",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/cards/{{cardId}}/block/me", "host": ["{{baseUrl}}"], "path": ["api","v1","cards","{{cardId}}","block","me"] }
-              }
-            },
-            {
-              "name": "Delete card – success",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 204', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "DELETE",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/cards/{{cardId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","cards","{{cardId}}"] }
-              }
-            },
-            {
-              "name": "Get card – unauthenticated (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/api/v1/cards/{{cardId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","cards","{{cardId}}"] }
-              }
-            }
-          ]
-        },
-
-        {
-          "name": "Transfers",
-          "item": [
-            {
-              "name": "Transfer for self (merchant)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 201', () => pm.response.to.have.status(201));","pm.test('status SUCCESS', () => pm.expect(pm.response.json().data.transferStatus).to.eql('SUCCESS'));","pm.test('reference matches', () => pm.expect(pm.response.json().data.reference).to.eql(pm.collectionVariables.get('transferRef')));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [
-                  { "key": "Authorization",     "value": "Bearer {{accessToken}}" },
-                  { "key": "X-Idempotency-Key", "value": "{{transferRef}}" },
-                  { "key": "Content-Type",       "value": "application/json" }
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has role id', () => pm.expect(pm.response.json().data.id).to.be.a('number'));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('roleId', pm.response.json().data.id);",
+                  "}"
                 ],
-                "body": { "mode": "raw", "raw": "{\n  \"fromAccountId\": {{fromAccountId}},\n  \"toAccountId\": {{toAccountId}},\n  \"amount\": \"1000.00\",\n  \"currency\": \"NGN\",\n  \"narration\": \"Test transfer\",\n  \"cardNumber\": \"4111111111111111\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/transfers/me", "host": ["{{baseUrl}}"], "path": ["api","v1","transfers","me"] }
-              }
-            },
-            {
-              "name": "Transfer for self – idempotent duplicate",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 201 (idempotent)', () => pm.response.to.have.status(201));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [
-                  { "key": "Authorization",     "value": "Bearer {{accessToken}}" },
-                  { "key": "X-Idempotency-Key", "value": "{{transferRef}}" },
-                  { "key": "Content-Type",       "value": "application/json" }
-                ],
-                "body": { "mode": "raw", "raw": "{\n  \"fromAccountId\": {{fromAccountId}},\n  \"toAccountId\": {{toAccountId}},\n  \"amount\": \"1000.00\",\n  \"currency\": \"NGN\",\n  \"narration\": \"Test transfer\",\n  \"cardNumber\": \"4111111111111111\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/transfers/me", "host": ["{{baseUrl}}"], "path": ["api","v1","transfers","me"] }
+                "type": "text/javascript"
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"TEST_ROLE_{{$timestamp}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/roles", "host": ["{{baseUrl}}"], "path": ["roles"] }
+          }
         },
-
         {
-          "name": "Transactions",
-          "item": [
+          "name": "GET /roles",
+          "event": [
             {
-              "name": "Get transactions by account",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "pm.test('status 200', () => pm.response.to.have.status(200));",
-                      "pm.test('content is array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));",
-                      "if (pm.response.json().data.content.length > 0) {",
-                      "  pm.collectionVariables.set('transactionId', pm.response.json().data.content[0].id);",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/transactions/account/{{fromAccountId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","transactions","account","{{fromAccountId}}"] }
-              }
-            },
-            {
-              "name": "Get transaction by id",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('id matches', () => pm.expect(String(pm.response.json().data.id)).to.eql(pm.collectionVariables.get('transactionId')));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/transactions/{{transactionId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","transactions","{{transactionId}}"] }
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has content array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/roles?page=1&size=10&sortField=name&sortDirection=ASC",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "10" },
+                { "key": "sortField", "value": "name" },
+                { "key": "sortDirection", "value": "ASC" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /roles/all",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/roles/all", "host": ["{{baseUrl}}"], "path": ["roles", "all"] }
+          }
+        },
+        {
+          "name": "GET /roles/{roleId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has role data', () => pm.expect(pm.response.json().data.id).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/roles/{{roleId}}", "host": ["{{baseUrl}}"], "path": ["roles", "{{roleId}}"] }
+          }
+        },
+        {
+          "name": "POST /roles/{roleId}/permissions (bulk)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"permissionIds\": [{{permissionId}}]\n}" },
+            "url": { "raw": "{{baseUrl}}/roles/{{roleId}}/permissions", "host": ["{{baseUrl}}"], "path": ["roles", "{{roleId}}", "permissions"] }
+          }
+        },
+        {
+          "name": "DELETE /roles/{roleId}/permissions (bulk)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"permissionIds\": [{{permissionId}}]\n}" },
+            "url": { "raw": "{{baseUrl}}/roles/{{roleId}}/permissions", "host": ["{{baseUrl}}"], "path": ["roles", "{{roleId}}", "permissions"] }
+          }
+        },
+        {
+          "name": "POST /roles/{roleId}/permissions/{permissionId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/roles/{{roleId}}/permissions/{{permissionId}}", "host": ["{{baseUrl}}"], "path": ["roles", "{{roleId}}", "permissions", "{{permissionId}}"] }
+          }
+        },
+        {
+          "name": "DELETE /roles/{roleId}/permissions/{permissionId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/roles/{{roleId}}/permissions/{{permissionId}}", "host": ["{{baseUrl}}"], "path": ["roles", "{{roleId}}", "permissions", "{{permissionId}}"] }
+          }
         }
-
       ]
     },
-
+    {
+      "name": "Permissions",
+      "item": [
+        {
+          "name": "POST /permissions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has permission id', () => pm.expect(pm.response.json().data.id).to.be.a('number'));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('permissionId', pm.response.json().data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"TEST_PERMISSION_{{$timestamp}}\",\n  \"description\": \"Test permission\"\n}" },
+            "url": { "raw": "{{baseUrl}}/permissions", "host": ["{{baseUrl}}"], "path": ["permissions"] }
+          }
+        },
+        {
+          "name": "GET /permissions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/permissions", "host": ["{{baseUrl}}"], "path": ["permissions"] }
+          }
+        },
+        {
+          "name": "GET /permissions/{permissionId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has permission data', () => pm.expect(pm.response.json().data.id).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/permissions/{{permissionId}}", "host": ["{{baseUrl}}"], "path": ["permissions", "{{permissionId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Merchants",
+      "item": [
+        {
+          "name": "POST /merchants",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has merchant id', () => pm.expect(pm.response.json().data.id).to.be.a('number'));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('merchantId', pm.response.json().data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": {{userId}},\n  \"address\": \"123 Test Street\",\n  \"tier\": \"TIER_1\"\n}" },
+            "url": { "raw": "{{baseUrl}}/merchants", "host": ["{{baseUrl}}"], "path": ["merchants"] }
+          }
+        },
+        {
+          "name": "POST /merchants/register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has merchant id', () => pm.expect(pm.response.json().data.id).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"firstname\": \"New\",\n  \"lastname\": \"Merchant\",\n  \"email\": \"new.merchant.{{$timestamp}}@test.com\",\n  \"phone\": \"{{$randomInt}}99999\",\n  \"password\": \"{{defaultPassword}}\",\n  \"address\": \"456 Commerce Ave\"\n}" },
+            "url": { "raw": "{{baseUrl}}/merchants/register", "host": ["{{baseUrl}}"], "path": ["merchants", "register"] }
+          }
+        },
+        {
+          "name": "POST /merchants/self-register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has merchant id', () => pm.expect(pm.response.json().data.id).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/merchants/self-register?address=789 Business Blvd",
+              "host": ["{{baseUrl}}"],
+              "path": ["merchants", "self-register"],
+              "query": [{ "key": "address", "value": "789 Business Blvd" }]
+            }
+          }
+        },
+        {
+          "name": "GET /merchants",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has content array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/merchants?page=1&size=10&sortField=created_at&sortDirection=DESC",
+              "host": ["{{baseUrl}}"],
+              "path": ["merchants"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "10" },
+                { "key": "sortField", "value": "created_at" },
+                { "key": "sortDirection", "value": "DESC" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /merchants/status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has content array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/merchants/status?status=ACTIVE&page=1&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["merchants", "status"],
+              "query": [
+                { "key": "status", "value": "ACTIVE" },
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /merchants/kyc-status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has content array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/merchants/kyc-status?kycStatus=PENDING&page=1&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["merchants", "kyc-status"],
+              "query": [
+                { "key": "kycStatus", "value": "PENDING" },
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /merchants/{merchantId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has merchant data', () => pm.expect(pm.response.json().data.id).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/merchants/{{merchantId}}", "host": ["{{baseUrl}}"], "path": ["merchants", "{{merchantId}}"] }
+          }
+        },
+        {
+          "name": "PUT /merchants/{merchantId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Address is updated', () => pm.expect(pm.response.json().data.address).to.eql('Updated Address'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"address\": \"Updated Address\"\n}" },
+            "url": { "raw": "{{baseUrl}}/merchants/{{merchantId}}", "host": ["{{baseUrl}}"], "path": ["merchants", "{{merchantId}}"] }
+          }
+        },
+        {
+          "name": "PATCH /merchants/{merchantId}/status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/merchants/{{merchantId}}/status?status=ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["merchants", "{{merchantId}}", "status"],
+              "query": [{ "key": "status", "value": "ACTIVE" }]
+            }
+          }
+        },
+        {
+          "name": "PATCH /merchants/{merchantId}/administrative-status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"merchantStatus\": \"ACTIVE\",\n  \"kycStatus\": \"VERIFIED\"\n}" },
+            "url": { "raw": "{{baseUrl}}/merchants/{{merchantId}}/administrative-status", "host": ["{{baseUrl}}"], "path": ["merchants", "{{merchantId}}", "administrative-status"] }
+          }
+        },
+        {
+          "name": "PATCH /merchants/{merchantId}/kyc",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/merchants/{{merchantId}}/kyc?kycStatus=VERIFIED",
+              "host": ["{{baseUrl}}"],
+              "path": ["merchants", "{{merchantId}}", "kyc"],
+              "query": [{ "key": "kycStatus", "value": "VERIFIED" }]
+            }
+          }
+        },
+        {
+          "name": "PATCH /merchants/{merchantId}/tier/upgrade",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/merchants/{{merchantId}}/tier/upgrade", "host": ["{{baseUrl}}"], "path": ["merchants", "{{merchantId}}", "tier", "upgrade"] }
+          }
+        },
+        {
+          "name": "PATCH /merchants/{merchantId}/tier/downgrade",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/merchants/{{merchantId}}/tier/downgrade", "host": ["{{baseUrl}}"], "path": ["merchants", "{{merchantId}}", "tier", "downgrade"] }
+          }
+        },
+        {
+          "name": "DELETE /merchants/{merchantId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/merchants/{{merchantId}}", "host": ["{{baseUrl}}"], "path": ["merchants", "{{merchantId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "POST /accounts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has account id', () => pm.expect(pm.response.json().data.id).to.be.a('number'));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('accountId', pm.response.json().data.id);",
+                  "  pm.collectionVariables.set('fromAccountNumber', pm.response.json().data.accountNumber);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"merchantId\": {{merchantId}},\n  \"accountType\": \"SAVINGS\",\n  \"currency\": \"NGN\"\n}" },
+            "url": { "raw": "{{baseUrl}}/accounts", "host": ["{{baseUrl}}"], "path": ["accounts"] }
+          }
+        },
+        {
+          "name": "POST /accounts/me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has account id', () => pm.expect(pm.response.json().data.id).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"accountType\": \"CURRENT\",\n  \"currency\": \"NGN\"\n}" },
+            "url": { "raw": "{{baseUrl}}/accounts/me", "host": ["{{baseUrl}}"], "path": ["accounts", "me"] }
+          }
+        },
+        {
+          "name": "GET /accounts/{accountId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has account data', () => pm.expect(pm.response.json().data.id).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/accounts/{{accountId}}", "host": ["{{baseUrl}}"], "path": ["accounts", "{{accountId}}"] }
+          }
+        },
+        {
+          "name": "GET /accounts/merchant/{merchantId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has content array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/merchant/{{merchantId}}?page=1&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["accounts", "merchant", "{{merchantId}}"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /accounts/{accountId}/status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/status?status=ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["accounts", "{{accountId}}", "status"],
+              "query": [{ "key": "status", "value": "ACTIVE" }]
+            }
+          }
+        },
+        {
+          "name": "DELETE /accounts/{accountId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/accounts/{{accountId}}", "host": ["{{baseUrl}}"], "path": ["accounts", "{{accountId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cards",
+      "item": [
+        {
+          "name": "POST /cards",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has card id', () => pm.expect(pm.response.json().data.id).to.be.a('number'));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('cardId', pm.response.json().data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"accountId\": {{accountId}},\n  \"cardNumber\": \"4111111111111111\",\n  \"cardType\": \"VIRTUAL\",\n  \"scheme\": \"VISA\",\n  \"expiryMonth\": 12,\n  \"expiryYear\": 2028\n}" },
+            "url": { "raw": "{{baseUrl}}/cards", "host": ["{{baseUrl}}"], "path": ["cards"] }
+          }
+        },
+        {
+          "name": "POST /cards/me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has card id', () => pm.expect(pm.response.json().data.id).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"accountId\": {{accountId}},\n  \"cardNumber\": \"5500000000000004\",\n  \"cardType\": \"PHYSICAL\",\n  \"scheme\": \"MASTERCARD\",\n  \"expiryMonth\": 6,\n  \"expiryYear\": 2027\n}" },
+            "url": { "raw": "{{baseUrl}}/cards/me", "host": ["{{baseUrl}}"], "path": ["cards", "me"] }
+          }
+        },
+        {
+          "name": "GET /cards/{cardId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has card data', () => pm.expect(pm.response.json().data.id).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/cards/{{cardId}}", "host": ["{{baseUrl}}"], "path": ["cards", "{{cardId}}"] }
+          }
+        },
+        {
+          "name": "GET /cards/account/{accountId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has content array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/cards/account/{{accountId}}?page=1&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["cards", "account", "{{accountId}}"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /cards/{cardId}/status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/cards/{{cardId}}/status?status=ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["cards", "{{cardId}}", "status"],
+              "query": [{ "key": "status", "value": "ACTIVE" }]
+            }
+          }
+        },
+        {
+          "name": "PATCH /cards/{cardId}/block",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/cards/{{cardId}}/block", "host": ["{{baseUrl}}"], "path": ["cards", "{{cardId}}", "block"] }
+          }
+        },
+        {
+          "name": "PATCH /cards/{cardId}/block/me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/cards/{{cardId}}/block/me", "host": ["{{baseUrl}}"], "path": ["cards", "{{cardId}}", "block", "me"] }
+          }
+        },
+        {
+          "name": "DELETE /cards/{cardId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/cards/{{cardId}}", "host": ["{{baseUrl}}"], "path": ["cards", "{{cardId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "GET /transactions/{transactionId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has transaction data', () => pm.expect(pm.response.json().data.id).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/transactions/{{transactionId}}", "host": ["{{baseUrl}}"], "path": ["transactions", "{{transactionId}}"] }
+          }
+        },
+        {
+          "name": "GET /transactions/me/account/{accountId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has content array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/me/account/{{accountId}}?page=1&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions", "me", "account", "{{accountId}}"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /transactions/account/{accountId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has content array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/account/{{accountId}}?page=1&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions", "account", "{{accountId}}"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transfers",
+      "item": [
+        {
+          "name": "POST /transfers/me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has transfer id', () => pm.expect(pm.response.json().data.id).to.be.a('number'));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('transferId', pm.response.json().data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"fromAccountNumber\": \"{{fromAccountNumber}}\",\n  \"toAccountNumber\": \"{{toAccountNumber}}\",\n  \"amount\": 100.00,\n  \"currency\": \"NGN\",\n  \"description\": \"Test transfer\"\n}" },
+            "url": { "raw": "{{baseUrl}}/transfers/me", "host": ["{{baseUrl}}"], "path": ["transfers", "me"] }
+          }
+        },
+        {
+          "name": "GET /transfers/{transferId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has transfer data', () => pm.expect(pm.response.json().data.id).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/transfers/{{transferId}}", "host": ["{{baseUrl}}"], "path": ["transfers", "{{transferId}}"] }
+          }
+        },
+        {
+          "name": "GET /transfers/me/account/{accountId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has content array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/transfers/me/account/{{accountId}}?page=1&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["transfers", "me", "account", "{{accountId}}"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /transfers/account/{accountId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has content array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/transfers/account/{{accountId}}?page=1&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["transfers", "account", "{{accountId}}"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tier Configs",
+      "item": [
+        {
+          "name": "POST /tier-configs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has tier config id', () => pm.expect(pm.response.json().data.id).to.be.a('number'));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('tierConfigId', pm.response.json().data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"tier\": \"TIER_4\",\n  \"dailyTransactionLimit\": 500000.00,\n  \"singleTransactionLimit\": 100000.00,\n  \"monthlyTransactionLimit\": 5000000.00,\n  \"maxCards\": 10,\n  \"maxAccounts\": 5\n}" },
+            "url": { "raw": "{{baseUrl}}/tier-configs", "host": ["{{baseUrl}}"], "path": ["tier-configs"] }
+          }
+        },
+        {
+          "name": "GET /tier-configs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/tier-configs", "host": ["{{baseUrl}}"], "path": ["tier-configs"] }
+          }
+        },
+        {
+          "name": "GET /tier-configs/{tierConfigId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has tier config data', () => pm.expect(pm.response.json().data.id).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/tier-configs/{{tierConfigId}}", "host": ["{{baseUrl}}"], "path": ["tier-configs", "{{tierConfigId}}"] }
+          }
+        },
+        {
+          "name": "GET /tier-configs/tier/{tier}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has tier config data', () => pm.expect(pm.response.json().data.tier).to.eql('TIER_1'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/tier-configs/tier/TIER_1", "host": ["{{baseUrl}}"], "path": ["tier-configs", "tier", "TIER_1"] }
+          }
+        },
+        {
+          "name": "PUT /tier-configs/{tier}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Limits are updated', () => pm.expect(pm.response.json().data.singleTransactionLimit).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"dailyTransactionLimit\": 600000.00,\n  \"singleTransactionLimit\": 150000.00,\n  \"monthlyTransactionLimit\": 6000000.00,\n  \"maxCards\": 15,\n  \"maxAccounts\": 7\n}" },
+            "url": { "raw": "{{baseUrl}}/tier-configs/TIER_1", "host": ["{{baseUrl}}"], "path": ["tier-configs", "TIER_1"] }
+          }
+        }
+      ]
+    },
     {
       "name": "Fraud",
       "item": [
         {
-          "name": "Fraud Detection",
-          "item": [
+          "name": "POST /fraud/evaluate",
+          "event": [
             {
-              "name": "Evaluate – CLEAN",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('result CLEAN', () => pm.expect(pm.response.json().data).to.eql('CLEAN'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"merchantId\": 1,\n  \"amount\": \"500.00\",\n  \"currency\": \"NGN\",\n  \"cardNumber\": \"4111111111111111\",\n  \"ipAddress\": \"10.0.0.1\",\n  \"transactionTime\": \"{{$isoTimestamp}}\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/fraud/evaluate", "host": ["{{baseUrl}}"], "path": ["api","v1","fraud","evaluate"] }
-              }
-            },
-            {
-              "name": "Evaluate – BLOCKED (blacklisted merchant)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('result BLOCKED', () => pm.expect(pm.response.json().data).to.eql('BLOCKED'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"merchantId\": 2,\n  \"amount\": \"500.00\",\n  \"currency\": \"NGN\",\n  \"cardNumber\": \"4111111111111111\",\n  \"ipAddress\": \"10.0.0.2\",\n  \"transactionTime\": \"{{$isoTimestamp}}\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/fraud/evaluate", "host": ["{{baseUrl}}"], "path": ["api","v1","fraud","evaluate"] }
-              }
-            },
-            {
-              "name": "Evaluate – SUSPICIOUS (round amount)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('result SUSPICIOUS', () => pm.expect(pm.response.json().data).to.eql('SUSPICIOUS'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"merchantId\": 1,\n  \"amount\": \"5000.00\",\n  \"currency\": \"NGN\",\n  \"cardNumber\": \"4111111111111111\",\n  \"ipAddress\": \"10.0.0.3\",\n  \"transactionTime\": \"{{$isoTimestamp}}\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/fraud/evaluate", "host": ["{{baseUrl}}"], "path": ["api","v1","fraud","evaluate"] }
-              }
-            },
-            {
-              "name": "Evaluate – SUSPICIOUS (amount exceeds single limit)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('result SUSPICIOUS', () => pm.expect(pm.response.json().data).to.eql('SUSPICIOUS'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"merchantId\": 1,\n  \"amount\": \"9999999.00\",\n  \"currency\": \"NGN\",\n  \"cardNumber\": \"4111111111111111\",\n  \"ipAddress\": \"10.0.0.4\",\n  \"transactionTime\": \"{{$isoTimestamp}}\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/fraud/evaluate", "host": ["{{baseUrl}}"], "path": ["api","v1","fraud","evaluate"] }
-              }
-            },
-            {
-              "name": "Evaluate – SUSPICIOUS (after-hours transaction)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('result SUSPICIOUS', () => pm.expect(pm.response.json().data).to.eql('SUSPICIOUS'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"merchantId\": 1,\n  \"amount\": \"100.00\",\n  \"currency\": \"NGN\",\n  \"cardNumber\": \"4111111111111111\",\n  \"ipAddress\": \"10.0.0.5\",\n  \"transactionTime\": \"2025-01-01T02:00:00Z\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/fraud/evaluate", "host": ["{{baseUrl}}"], "path": ["api","v1","fraud","evaluate"] }
-              }
-            },
-            {
-              "name": "Evaluate – unauthenticated (401)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"merchantId\": 1,\n  \"amount\": \"500.00\",\n  \"currency\": \"NGN\",\n  \"cardNumber\": \"4111111111111111\",\n  \"ipAddress\": \"10.0.0.6\",\n  \"transactionTime\": \"{{$isoTimestamp}}\"\n}" },
-                "url": { "raw": "{{baseUrl}}/api/v1/fraud/evaluate", "host": ["{{baseUrl}}"], "path": ["api","v1","fraud","evaluate"] }
-              }
-            },
-            {
-              "name": "Get fraud attempts (paginated)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));","pm.test('content is array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));","pm.test('totalElements is number', () => pm.expect(pm.response.json().data.page.totalElements).to.be.a('number'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/fraud/attempts?page=1&size=10", "host": ["{{baseUrl}}"], "path": ["api","v1","fraud","attempts"], "query": [{ "key": "page", "value": "1" }, { "key": "size", "value": "10" }] }
-              }
-            },
-            {
-              "name": "Get fraud attempts – non-superadmin forbidden (403)",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 403', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/fraud/attempts", "host": ["{{baseUrl}}"], "path": ["api","v1","fraud","attempts"] }
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has fraud status', () => pm.expect(['ALLOWED', 'BLOCKED', 'SUSPICIOUS']).to.include(pm.response.json().data));"
+                ],
+                "type": "text/javascript"
               }
             }
-          ]
-        }
-      ]
-    },
-
-    {
-      "name": "Monitoring",
-      "item": [
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"cardHash\": \"abc123hash\",\n  \"merchantId\": {{merchantId}},\n  \"ipAddress\": \"192.168.1.1\",\n  \"amount\": 500.00,\n  \"currency\": \"NGN\",\n  \"accountNumber\": \"{{fromAccountNumber}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/fraud/evaluate", "host": ["{{baseUrl}}"], "path": ["fraud", "evaluate"] }
+          }
+        },
         {
-          "name": "Actuator",
-          "item": [
+          "name": "GET /fraud/attempts",
+          "event": [
             {
-              "name": "Health",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/actuator/health", "host": ["{{baseUrl}}"], "path": ["actuator","health"] }
-              }
-            },
-            {
-              "name": "Health – Blacklist Cache",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200 or 503', () => pm.expect([200, 503]).to.include(pm.response.code));","const body = pm.response.json();","pm.test('has blacklistCache component', () => pm.expect(body.components).to.have.property('blacklistCache'));","pm.test('has hitRate detail', () => pm.expect(body.components.blacklistCache.details).to.have.property('hitRate'));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/actuator/health", "host": ["{{baseUrl}}"], "path": ["actuator","health"] }
-              }
-            },
-            {
-              "name": "Info",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/actuator/info", "host": ["{{baseUrl}}"], "path": ["actuator","info"] }
-              }
-            },
-            {
-              "name": "Metrics",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/actuator/metrics", "host": ["{{baseUrl}}"], "path": ["actuator","metrics"] }
-              }
-            },
-            {
-              "name": "Env",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/actuator/env", "host": ["{{baseUrl}}"], "path": ["actuator","env"] }
-              }
-            },
-            {
-              "name": "Beans",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/actuator/beans", "host": ["{{baseUrl}}"], "path": ["actuator","beans"] }
-              }
-            },
-            {
-              "name": "Mappings",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/actuator/mappings", "host": ["{{baseUrl}}"], "path": ["actuator","mappings"] }
-              }
-            },
-            {
-              "name": "Loggers",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/actuator/loggers", "host": ["{{baseUrl}}"], "path": ["actuator","loggers"] }
-              }
-            },
-            {
-              "name": "Thread Dump",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/actuator/threaddump", "host": ["{{baseUrl}}"], "path": ["actuator","threaddump"] }
-              }
-            },
-            {
-              "name": "Heap Dump",
-              "event": [{ "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/actuator/heapdump", "host": ["{{baseUrl}}"], "path": ["actuator","heapdump"] }
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has content array', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/fraud/attempts?page=1&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["fraud", "attempts"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
         }
       ]
     }
-
   ]
 }

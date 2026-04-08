@@ -131,7 +131,7 @@ public class AccountControllerIntegrationTest extends BaseControllerIntegrationT
     @Test
     @DisplayName("should delete account successfully")
     void shouldDeleteAccountSuccessfully() throws Exception {
-        CreateAccountRequest request = new CreateAccountRequest(2L, AccountType.ESCROW, "NGN");
+        CreateAccountRequest request = new CreateAccountRequest(3L, AccountType.ESCROW, "NGN");
 
         MvcResult result = mockMvc.perform(post("/api/v1/accounts")
                         .header("Authorization", bearerToken(superAdminToken))

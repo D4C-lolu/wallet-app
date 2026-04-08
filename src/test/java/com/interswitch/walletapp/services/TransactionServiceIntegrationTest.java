@@ -54,8 +54,8 @@ public class TransactionServiceIntegrationTest extends BaseIntegrationTest {
 
     private TransferRequest buildTransferRequest() {
         return new TransferRequest(
-                1L,
-                2L,
+                "0000000000",
+                "1100000001",
                 new BigDecimal("1000.00"),
                 "NGN",
                 "Test transfer",

@@ -4,7 +4,6 @@ import com.interswitch.walletapp.models.enums.FraudStatus;
 import com.interswitch.walletapp.models.projections.FraudAttemptRecord;
 import com.interswitch.walletapp.models.response.FraudAttemptResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -23,35 +22,6 @@ public class FraudDao {
 
     private final NamedParameterJdbcTemplate namedJdbc;
 
-    private static final String INSERT_FRAUD_ATTEMPT = """
-            INSERT INTO fraud_attempts (card_hash, merchant_id, ip_address, amount, currency, status, flags, created_at)
-            VALUES (:cardHash, :merchantId, :ipAddress, :amount, :currency, :status, :flags, now())
-            """;
-
-    private static final String CARD_VELOCITY_COUNT = """
-            SELECT COUNT(*) FROM fraud_attempts
-            WHERE card_hash = :cardHash
-            AND created_at >= :since
-            """;
-
-    private static final String MERCHANT_SINGLE_LIMIT = """
-            SELECT tc.single_transaction_limit
-            FROM tier_configs tc
-            JOIN merchants m ON m.tier = tc.tier
-            WHERE m.id = :merchantId
-            AND m.deleted_at IS NULL
-            """;
-
-    private static final String SELECT_ALL_FRAUD_ATTEMPTS = """
-            SELECT * FROM fraud_attempts
-            ORDER BY created_at DESC
-            LIMIT :limit OFFSET :offset
-            """;
-
-    private static final String COUNT_ALL_FRAUD_ATTEMPTS = """
-            SELECT COUNT(*) FROM fraud_attempts
-            """;
-
     public void insertFraudAttempt(FraudAttemptRecord record) {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("cardHash", record.cardHash())
@@ -62,40 +32,63 @@ public class FraudDao {
                 .addValue("status", record.status().name())
                 .addValue("flags", record.flags().toArray(new String[0]));
 
-        namedJdbc.update(INSERT_FRAUD_ATTEMPT, params);
+        namedJdbc.queryForList(
+                "SELECT sp_fraud_insert_attempt(:cardHash, :merchantId, :ipAddress, :amount, :currency, :status, :flags)",
+                params
+        );
     }
 
     public int getCardVelocityCount(String cardHash, OffsetDateTime since) {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("cardHash", cardHash)
                 .addValue("since", since);
-        Integer count = namedJdbc.queryForObject(CARD_VELOCITY_COUNT, params, Integer.class);
+        Integer count = namedJdbc.queryForObject(
+                "SELECT sp_fraud_get_card_velocity_count(:cardHash, :since)",
+                params, Integer.class
+        );
         return count != null ? count : 0;
     }
 
     public Optional<BigDecimal> getMerchantSingleLimit(Long merchantId) {
-        try {
-            BigDecimal limit = namedJdbc.queryForObject(
-                    MERCHANT_SINGLE_LIMIT,
-                    new MapSqlParameterSource("merchantId", merchantId),
-                    BigDecimal.class
-            );
-            return Optional.ofNullable(limit);
-        } catch (EmptyResultDataAccessException e) {
-            return Optional.empty();
-        }
+        BigDecimal limit = namedJdbc.queryForObject(
+                "SELECT sp_fraud_get_merchant_single_limit(:merchantId)",
+                new MapSqlParameterSource("merchantId", merchantId),
+                BigDecimal.class
+        );
+        return Optional.ofNullable(limit);
+    }
+
+    public Optional<BigDecimal> getMerchantSingleLimitByAccount(String accountNumber) {
+        BigDecimal limit = namedJdbc.queryForObject(
+                "SELECT sp_fraud_get_merchant_single_limit_by_account(:accountNumber)",
+                new MapSqlParameterSource("accountNumber", accountNumber),
+                BigDecimal.class
+        );
+        return Optional.ofNullable(limit);
+    }
+
+    public Optional<Long> getMerchantIdByAccount(String accountNumber) {
+        Long merchantId = namedJdbc.queryForObject(
+                "SELECT sp_fraud_get_merchant_id_by_account(:accountNumber)",
+                new MapSqlParameterSource("accountNumber", accountNumber),
+                Long.class
+        );
+        return Optional.ofNullable(merchantId);
     }
 
     public List<FraudAttemptResponse> getFraudAttempts(int limit, int offset) {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("limit", limit)
                 .addValue("offset", offset);
-        return namedJdbc.query(SELECT_ALL_FRAUD_ATTEMPTS, params, fraudAttemptRowMapper());
+        return namedJdbc.query(
+                "SELECT * FROM sp_fraud_get_attempts(:limit, :offset)",
+                params, fraudAttemptRowMapper()
+        );
     }
 
     public long countFraudAttempts() {
         Long count = namedJdbc.queryForObject(
-                COUNT_ALL_FRAUD_ATTEMPTS,
+                "SELECT sp_fraud_count_attempts()",
                 new MapSqlParameterSource(),
                 Long.class
         );

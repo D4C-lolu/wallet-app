@@ -47,7 +47,7 @@ public class FraudDetectionServiceIntegrationTest extends BaseIntegrationTest {
 
     private FraudEvaluationContext buildContext(String cardNumber, BigDecimal amount) {
         return new FraudEvaluationContext(
-                1L,
+                "0000000000",
                 amount,
                 "NGN",
                 cardNumber,
@@ -70,9 +70,9 @@ public class FraudDetectionServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should return BLOCKED when merchant is blacklisted")
     void shouldReturnBlockedWhenMerchantIsBlacklisted() {
-        // merchant 999L must be seeded as blacklisted in test data
+        // merchant 2 (testmerchant) is blacklisted, account 2200000001 belongs to them
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                2L,
+                "2200000001",
                 new BigDecimal("100.00"),
                 "NGN",
                 "4111111111111111",
@@ -90,7 +90,7 @@ public class FraudDetectionServiceIntegrationTest extends BaseIntegrationTest {
     void shouldReturnBlockedWhenIpIsRateLimited() {
         String hammeredIp = "10.0.0.1";
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                1L,
+                "0000000000",
                 new BigDecimal("100.00"),
                 "NGN",
                 "4111111111111112",
@@ -162,7 +162,7 @@ public class FraudDetectionServiceIntegrationTest extends BaseIntegrationTest {
     @DisplayName("should flag SUSPICIOUS for transaction before business hours (hour 3)")
     void shouldFlagSuspiciousForTransactionBeforeBusinessHours() {
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                1L,
+                "0000000000",
                 new BigDecimal("350.00"),
                 "NGN",
                 "4111111111111117",
@@ -179,7 +179,7 @@ public class FraudDetectionServiceIntegrationTest extends BaseIntegrationTest {
     @DisplayName("should flag SUSPICIOUS for transaction after business hours (hour 23)")
     void shouldFlagSuspiciousForTransactionAfterBusinessHours() {
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                1L,
+                "0000000000",
                 new BigDecimal("350.00"),
                 "NGN",
                 "4111111111111118",
@@ -196,7 +196,7 @@ public class FraudDetectionServiceIntegrationTest extends BaseIntegrationTest {
     @DisplayName("should not flag after-hours at opening boundary (hour 6)")
     void shouldNotFlagAfterHoursAtOpeningBoundary() {
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                1L,
+                "0000000000",
                 new BigDecimal("350.00"),
                 "NGN",
                 "4111111111111119",
@@ -227,7 +227,7 @@ public class FraudDetectionServiceIntegrationTest extends BaseIntegrationTest {
     void shouldRemainSuspiciousWithMultipleSoftFlags() {
         // round amount + after hours
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                1L,
+                "0000000000",
                 new BigDecimal("3000.00"),
                 "NGN",
                 "4111111111111121",

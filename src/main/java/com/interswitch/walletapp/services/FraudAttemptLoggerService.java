@@ -20,11 +20,11 @@ public class FraudAttemptLoggerService {
     private final FraudDao fraudDao;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logAttempt(String cardHash, FraudEvaluationContext ctx, FraudStatus status, List<String> flags) {
+    public void logAttempt(String cardHash, FraudEvaluationContext ctx, Long merchantId, FraudStatus status, List<String> flags) {
         try {
             fraudDao.insertFraudAttempt(new FraudAttemptRecord(
                     cardHash,
-                    ctx.merchantId(),
+                    merchantId,
                     ctx.ipAddress(),
                     ctx.amount(),
                     ctx.currency(),
@@ -32,7 +32,7 @@ public class FraudAttemptLoggerService {
                     flags
             ));
         } catch (Exception e) {
-            log.error("Failed to log fraud attempt for merchant={} ip={}", ctx.merchantId(), ctx.ipAddress(), e);
+            log.error("Failed to log fraud attempt for account={} ip={}", ctx.accountNumber(), ctx.ipAddress(), e);
         }
     }
 }

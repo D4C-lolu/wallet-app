@@ -27,6 +27,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("Transaction Controller Integration Tests")
 public class TransactionControllerIntegrationTest extends BaseControllerIntegrationTest {
 
+    private static final String FROM_ACCOUNT_NUMBER = "0000000000";
+    private static final String TO_ACCOUNT_NUMBER = "1100000001";
+
     @Autowired
     private AccountRepository accountRepository;
 
@@ -37,22 +40,20 @@ public class TransactionControllerIntegrationTest extends BaseControllerIntegrat
     private UserRepository userRepository;
 
     private Long fromAccountId;
-    private Long toAccountId;
 
     @BeforeEach
     void setup() throws Exception {
         superAdminToken = loginAndGetAccessToken("superadmin@verveguard.com", "Admin123!");
         merchantToken   = loginAndGetAccessToken("demo.merchant@verveguard.com", "Admin123!");
 
-        fromAccountId = accountRepository.findByAccountNumber("0000000000").orElseThrow().getId();
-        toAccountId   = accountRepository.findByAccountNumber("1100000001").orElseThrow().getId();
+        fromAccountId = accountRepository.findByAccountNumber(FROM_ACCOUNT_NUMBER).orElseThrow().getId();
 
         User merchant = userRepository.findByEmail("demo.merchant@verveguard.com").orElseThrow();
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(new UserPrincipal(merchant), null, List.of())
         );
         transferService.transferForSelf(new TransferRequest(
-                 fromAccountId, toAccountId,
+                FROM_ACCOUNT_NUMBER, TO_ACCOUNT_NUMBER,
                 new BigDecimal("1000.00"), "NGN", "Setup transfer", "4111111111111111"
         ), "REF-TXN-SETUP");
         SecurityContextHolder.clearContext();

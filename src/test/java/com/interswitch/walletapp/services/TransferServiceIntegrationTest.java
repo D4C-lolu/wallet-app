@@ -59,10 +59,13 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
         SecurityContextHolder.clearContext();
     }
 
+    private static final String FROM_ACCOUNT_NUMBER = "0000000000";
+    private static final String TO_ACCOUNT_NUMBER = "1100000001";
+
     private TransferRequest buildTransferRequest() {
         return new TransferRequest(
-                1L,
-                2L,
+                FROM_ACCOUNT_NUMBER,
+                TO_ACCOUNT_NUMBER,
                 new BigDecimal("1000.00"),
                 "NGN",
                 "Test transfer",
@@ -80,8 +83,8 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
 
         assertThat(response.id()).isNotNull().isPositive();
         assertThat(response.reference()).isEqualTo(reference);
-        assertThat(response.fromAccountId()).isEqualTo(request.fromAccountId());
-        assertThat(response.toAccountId()).isEqualTo(request.toAccountId());
+        assertThat(response.fromAccountId()).isNotNull();
+        assertThat(response.toAccountId()).isNotNull();
         assertThat(response.amount()).isEqualByComparingTo(request.amount());
         assertThat(response.transferStatus()).isEqualTo(TransferStatus.SUCCESS);
     }
@@ -93,13 +96,13 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
         BigDecimal amount = new BigDecimal("1000.00");
         TransferRequest request = buildTransferRequest();
 
-        BigDecimal fromBalanceBefore = getAccountBalance(1L);
-        BigDecimal toBalanceBefore = getAccountBalance(2L);
+        BigDecimal fromBalanceBefore = getAccountBalanceByNumber(FROM_ACCOUNT_NUMBER);
+        BigDecimal toBalanceBefore = getAccountBalanceByNumber(TO_ACCOUNT_NUMBER);
 
         transferService.transferForSelf(request, reference);
 
-        BigDecimal fromBalanceAfter = getAccountBalance(1L);
-        BigDecimal toBalanceAfter = getAccountBalance(2L);
+        BigDecimal fromBalanceAfter = getAccountBalanceByNumber(FROM_ACCOUNT_NUMBER);
+        BigDecimal toBalanceAfter = getAccountBalanceByNumber(TO_ACCOUNT_NUMBER);
 
         assertThat(fromBalanceAfter).isEqualByComparingTo(fromBalanceBefore.subtract(amount));
         assertThat(toBalanceAfter).isEqualByComparingTo(toBalanceBefore.add(amount));
@@ -122,8 +125,8 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
     void shouldFailTransferWithInsufficientFunds() {
         reference = "REF-004";
         TransferRequest request = new TransferRequest(
-                1L,
-                2L,
+                FROM_ACCOUNT_NUMBER,
+                TO_ACCOUNT_NUMBER,
                 new BigDecimal("999999999999.00"),
                 "NGN",
                 "Test transfer",
@@ -145,8 +148,8 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
         );
         SecurityContextHolder.getContext().setAuthentication(auth);
         TransferRequest request = new TransferRequest(
-                1L,
-                2L,
+                FROM_ACCOUNT_NUMBER,
+                TO_ACCOUNT_NUMBER,
                 new BigDecimal("1000.00"),
                 "USD",
                 "Test transfer",
@@ -225,6 +228,14 @@ public class TransferServiceIntegrationTest extends BaseIntegrationTest {
         return namedJdbc.queryForObject(
                 "SELECT balance FROM accounts WHERE id = :id",
                 new MapSqlParameterSource("id", accountId),
+                BigDecimal.class
+        );
+    }
+
+    private BigDecimal getAccountBalanceByNumber(String accountNumber) {
+        return namedJdbc.queryForObject(
+                "SELECT balance FROM accounts WHERE account_number = :accountNumber",
+                new MapSqlParameterSource("accountNumber", accountNumber),
                 BigDecimal.class
         );
     }

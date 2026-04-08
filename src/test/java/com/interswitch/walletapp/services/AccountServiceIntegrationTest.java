@@ -45,6 +45,7 @@ public class AccountServiceIntegrationTest extends BaseIntegrationTest {
     private Long demoMerchantId;
     private Long pendingMerchantId;
     private Long demoAccountId;
+    private Long testMerchant4Id;
 
     @BeforeEach
     void setUp() {
@@ -55,6 +56,9 @@ public class AccountServiceIntegrationTest extends BaseIntegrationTest {
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         demoMerchantId = merchantRepository.findByUserEmail("demo.merchant@verveguard.com")
+                .orElseThrow().getId();
+
+        testMerchant4Id = merchantRepository.findByUserEmail("testmerchant4@verveguard.com")
                 .orElseThrow().getId();
 
         pendingMerchantId = merchantRepository.findByUserEmail("testmerchant2@verveguard.com")
@@ -77,13 +81,13 @@ public class AccountServiceIntegrationTest extends BaseIntegrationTest {
     @DisplayName("should create account successfully")
     void shouldCreateAccountSuccessfully() {
         CreateAccountRequest request = new CreateAccountRequest(
-                merchantId, AccountType.WALLET, "NGN"
+                testMerchant4Id, AccountType.WALLET, "NGN"
         );
 
         AccountResponse response = accountService.createAccount(request);
 
         assertThat(response.id()).isNotNull().isPositive();
-        assertThat(response.merchantId()).isEqualTo(merchantId);
+        assertThat(response.merchantId()).isEqualTo(testMerchant4Id);
         assertThat(response.accountType()).isEqualTo(request.accountType());
         assertThat(response.currency()).isEqualTo(request.currency());
         assertThat(response.balance()).isEqualByComparingTo(BigDecimal.ZERO);
@@ -159,7 +163,7 @@ public class AccountServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should create account for self successfully")
     void shouldCreateAccountForSelfSuccessfully() {
-        User merchantUser = userRepository.findByEmail("testadmin@verveguard.com").orElseThrow();
+        User merchantUser = userRepository.findByEmail("testmerchant4@verveguard.com").orElseThrow();
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(new UserPrincipal(merchantUser), null, List.of())
         );
@@ -168,7 +172,7 @@ public class AccountServiceIntegrationTest extends BaseIntegrationTest {
         AccountResponse response = accountService.createAccountForSelf(request);
 
         assertThat(response.id()).isNotNull().isPositive();
-        assertThat(response.merchantId()).isEqualTo(merchantId);
+        assertThat(response.merchantId()).isEqualTo(testMerchant4Id);
         assertThat(response.accountType()).isEqualTo(request.accountType());
         assertThat(response.currency()).isEqualTo(request.currency());
     }
@@ -195,7 +199,7 @@ public class AccountServiceIntegrationTest extends BaseIntegrationTest {
     @DisplayName("should soft delete account successfully")
     void shouldSoftDeleteAccountSuccessfully() {
         AccountResponse created = accountService.createAccount(
-                new CreateAccountRequest(merchantId, AccountType.ESCROW, "NGN")
+                new CreateAccountRequest(testMerchant4Id, AccountType.ESCROW, "NGN")
         );
 
         assertThatNoException().isThrownBy(() -> accountService.deleteAccount(created.id()));
@@ -205,7 +209,7 @@ public class AccountServiceIntegrationTest extends BaseIntegrationTest {
     @DisplayName("should not find soft deleted account")
     void shouldNotFindSoftDeletedAccount() {
         AccountResponse created = accountService.createAccount(
-                new CreateAccountRequest(merchantId, AccountType.ESCROW, "NGN")
+                new CreateAccountRequest(testMerchant4Id, AccountType.ESCROW, "NGN")
         );
         accountService.deleteAccount(created.id());
 

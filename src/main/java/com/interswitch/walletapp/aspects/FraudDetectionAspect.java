@@ -33,7 +33,7 @@ public class FraudDetectionAspect {
         TransferRequest request = extractTransferRequest(joinPoint);
 
         FraudEvaluationContext ctx = new FraudEvaluationContext(
-                request.fromAccountId(),
+                request.fromAccountNumber(),
                 request.amount(),
                 request.currency(),
                 request.cardNumber(),
