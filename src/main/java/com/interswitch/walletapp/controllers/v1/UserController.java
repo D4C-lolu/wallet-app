@@ -1,5 +1,6 @@
 package com.interswitch.walletapp.controllers.v1;
 
+import com.interswitch.walletapp.annotation.ObserveParam;
 import com.interswitch.walletapp.annotation.ValidSortField;
 import com.interswitch.walletapp.constants.Permissions;
 import com.interswitch.walletapp.models.enums.UserStatus;
@@ -55,7 +56,7 @@ public class UserController {
     @Operation(summary = "Get User by ID", description = "Fetch detailed profile information for a specific user.")
     @GetMapping("{userId}")
     @PreAuthorize("hasAuthority('" + Permissions.USER_READ + "')")
-    public UserResponse getUserById(@PathVariable Long userId) {
+    public UserResponse getUserById(@ObserveParam("userId") @PathVariable Long userId) {
         return userService.getUserById(userId);
     }
 
@@ -63,7 +64,7 @@ public class UserController {
     @PutMapping("{userId}")
     @PreAuthorize("hasAuthority('" + Permissions.USER_UPDATE + "')")
     public UserResponse updateUser(
-            @PathVariable Long userId,
+            @ObserveParam("userId") @PathVariable Long userId,
             @RequestBody @Valid UpdateUserRequest request
     ) {
         return userService.updateUser(userId, request);
@@ -74,7 +75,7 @@ public class UserController {
     @PatchMapping("{userId}/status")
     @PreAuthorize("hasAuthority('" + Permissions.USER_UPDATE + "')")
     public UserResponse changeUserStatus(
-            @PathVariable Long userId,
+            @ObserveParam("userId") @PathVariable Long userId,
             @RequestParam UserStatus status
     ) {
         return userService.changeUserStatus(userId, status);
@@ -85,7 +86,7 @@ public class UserController {
     @PatchMapping("{userId}/role")
     @PreAuthorize("hasAuthority('" + Permissions.USER_UPDATE + "')")
     public UserResponse changeUserRole(
-            @PathVariable Long userId,
+            @ObserveParam("userId") @PathVariable Long userId,
             @RequestParam Long roleId
     ) {
         return userService.changeUserRole(userId, roleId);
@@ -98,7 +99,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PatchMapping("{userId}/password")
     public void changePassword(
-            @PathVariable Long userId,
+            @ObserveParam("userId") @PathVariable Long userId,
             @RequestBody @Valid ChangePasswordRequest request
     ) {
         userService.changePassword(userId, request);
@@ -108,7 +109,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("{userId}")
     @PreAuthorize("hasAuthority('" + Permissions.USER_DELETE + "')")
-    public void deleteUser(@PathVariable Long userId) {
+    public void deleteUser(@ObserveParam("userId") @PathVariable Long userId) {
         userService.deleteUser(userId);
     }
 }

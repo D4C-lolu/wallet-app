@@ -134,6 +134,15 @@ public class ResponseBodyAdviceImpl  {
         return new ResponseEntity<>(apiError, FORBIDDEN);
     }
 
+    @ExceptionHandler(FraudDetectedException.class)
+    public ResponseEntity<ApiError> handleFraudDetectedException(FraudDetectedException e, HttpServletRequest request) {
+        final var errorTraceId = UUID.randomUUID().toString();
+        final var uri = request.getRequestURI();
+        log.warn("Fraud detected at {} with id {}: {}", uri, errorTraceId, e.getMessage());
+        final var apiError = new ApiError(uri, e.getMessage(), errorTraceId, FORBIDDEN.value(), now());
+        return new ResponseEntity<>(apiError, FORBIDDEN);
+    }
+
     @ExceptionHandler(InvalidTokenException.class)
     public ResponseEntity<ApiError> handleInvalidTokenException(InvalidTokenException e, HttpServletRequest request) {
         final var errorTraceId = UUID.randomUUID().toString();

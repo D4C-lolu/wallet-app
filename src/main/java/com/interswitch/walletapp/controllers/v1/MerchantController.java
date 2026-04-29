@@ -1,5 +1,6 @@
 package com.interswitch.walletapp.controllers.v1;
 
+import com.interswitch.walletapp.annotation.ObserveParam;
 import com.interswitch.walletapp.constants.Permissions;
 import com.interswitch.walletapp.constants.Roles;
 import com.interswitch.walletapp.models.enums.KycStatus;
@@ -115,7 +116,7 @@ public class MerchantController {
     )
     @GetMapping("{merchantId}")
     @PreAuthorize("hasAuthority('" + Permissions.MERCHANT_READ + "')")
-    public MerchantResponse getMerchantById(@PathVariable Long merchantId) {
+    public MerchantResponse getMerchantById(@ObserveParam("merchantId") @PathVariable Long merchantId) {
         return merchantService.getMerchantById(merchantId);
     }
 
@@ -126,7 +127,7 @@ public class MerchantController {
     @PutMapping("{merchantId}")
     @PreAuthorize("hasAuthority('" + Permissions.MERCHANT_UPDATE + "')")
     public MerchantResponse updateMerchant(
-            @PathVariable Long merchantId,
+            @ObserveParam("merchantId") @PathVariable Long merchantId,
             @RequestBody @Valid UpdateMerchantRequest request
     ) {
         return merchantService.updateMerchant(merchantId, request);
@@ -140,7 +141,7 @@ public class MerchantController {
     @PatchMapping("{merchantId}/status")
     @PreAuthorize("hasAuthority('" + Permissions.MERCHANT_UPDATE + "')")
     public MerchantResponse updateMerchantStatus(
-            @PathVariable Long merchantId,
+            @ObserveParam("merchantId") @PathVariable Long merchantId,
             @RequestParam MerchantStatus status
     ) {
         return merchantService.updateMerchantStatus(merchantId, status);
@@ -154,7 +155,7 @@ public class MerchantController {
     @PatchMapping("{merchantId}/administrative-status")
     @PreAuthorize("hasRole('"+ Roles.ADMIN +"') or hasRole('" + Roles.SUPER_ADMIN + "')")
     public MerchantResponse updateMerchantStatusAndKyc(
-            @PathVariable Long merchantId,
+            @ObserveParam("merchantId") @PathVariable Long merchantId,
             @RequestBody @Valid UpdateMerchantStatusRequest request
     ) {
         return merchantService.updateMerchantStatusAndKycStatus(
@@ -171,7 +172,7 @@ public class MerchantController {
     @PatchMapping("{merchantId}/kyc")
     @PreAuthorize("hasAuthority('" + Permissions.MERCHANT_KYC + "')")
     public MerchantResponse updateKycStatus(
-            @PathVariable Long merchantId,
+            @ObserveParam("merchantId") @PathVariable Long merchantId,
             @RequestParam KycStatus kycStatus
     ) {
         return merchantService.updateKycStatus(merchantId, kycStatus);
@@ -183,7 +184,7 @@ public class MerchantController {
     )
     @PatchMapping("{merchantId}/tier/upgrade")
     @PreAuthorize("hasAuthority('" + Permissions.MERCHANT_UPDATE + "')")
-    public MerchantResponse upgradeTier(@PathVariable Long merchantId) {
+    public MerchantResponse upgradeTier(@ObserveParam("merchantId") @PathVariable Long merchantId) {
         return merchantService.upgradeTier(merchantId);
     }
 
@@ -193,7 +194,7 @@ public class MerchantController {
     )
     @PatchMapping("{merchantId}/tier/downgrade")
     @PreAuthorize("hasAuthority('" + Permissions.MERCHANT_UPDATE + "')")
-    public MerchantResponse downgradeTier(@PathVariable Long merchantId) {
+    public MerchantResponse downgradeTier(@ObserveParam("merchantId") @PathVariable Long merchantId) {
         return merchantService.downgradeTier(merchantId);
     }
 
@@ -207,7 +208,7 @@ public class MerchantController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("{merchantId}")
     @PreAuthorize("hasAuthority('" + Permissions.MERCHANT_DELETE + "')")
-    public void deleteMerchant(@PathVariable Long merchantId) {
+    public void deleteMerchant(@ObserveParam("merchantId") @PathVariable Long merchantId) {
         merchantService.deleteMerchant(merchantId);
     }
 }

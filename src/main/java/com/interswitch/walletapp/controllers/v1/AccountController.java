@@ -1,6 +1,7 @@
 package com.interswitch.walletapp.controllers.v1;
 
 
+import com.interswitch.walletapp.annotation.ObserveParam;
 import com.interswitch.walletapp.constants.Permissions;
 import com.interswitch.walletapp.constants.Roles;
 import com.interswitch.walletapp.models.enums.AccountStatus;
@@ -50,7 +51,7 @@ public class AccountController {
             description = "Requires ACCOUNT_READ authority. Fetches balance and status by ID.")
     @GetMapping("{accountId}")
     @PreAuthorize("hasAuthority('" + Permissions.ACCOUNT_READ + "')")
-    public AccountResponse getAccountById(@PathVariable Long accountId) {
+    public AccountResponse getAccountById(@ObserveParam("accountId") @PathVariable Long accountId) {
         return accountService.getAccountById(accountId);
     }
 
@@ -59,7 +60,7 @@ public class AccountController {
     @GetMapping("merchant/{merchantId}")
     @PreAuthorize("hasAuthority('" + Permissions.ACCOUNT_READ + "')")
     public Page<AccountResponse> getAccountsByMerchant(
-            @PathVariable Long merchantId,
+            @ObserveParam("merchantId") @PathVariable Long merchantId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "created_at") String sortField,
@@ -74,7 +75,7 @@ public class AccountController {
     @PatchMapping("{accountId}/status")
     @PreAuthorize("hasAuthority('" + Permissions.ACCOUNT_UPDATE + "')")
     public AccountResponse updateAccountStatus(
-            @PathVariable Long accountId,
+            @ObserveParam("accountId") @PathVariable Long accountId,
             @RequestParam AccountStatus status
     ) {
         return accountService.updateAccountStatus(accountId, status);
@@ -88,7 +89,7 @@ public class AccountController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("{accountId}")
     @PreAuthorize("hasAuthority('" + Permissions.ACCOUNT_DELETE + "')")
-    public void deleteAccount(@PathVariable Long accountId) {
+    public void deleteAccount(@ObserveParam("accountId") @PathVariable Long accountId) {
         accountService.deleteAccount(accountId);
     }
 }

@@ -68,11 +68,6 @@ public class FraudDetectionService {
             status = FraudStatus.SUSPICIOUS;
         }
 
-        if (isRoundAmount(ctx.amount())) {
-            flags.add("ROUND_AMOUNT");
-            status = FraudStatus.SUSPICIOUS;
-        }
-
         if (isAfterHours(ctx.transactionTime())) {
             flags.add("AFTER_HOURS");
             status = FraudStatus.SUSPICIOUS;
@@ -118,10 +113,6 @@ public class FraudDetectionService {
         return fraudDao.getMerchantSingleLimitByAccount(accountNumber)
                 .map(limit -> amount.compareTo(limit) > 0)
                 .orElse(false);
-    }
-
-    private boolean isRoundAmount(BigDecimal amount) {
-        return amount.remainder(new BigDecimal("1000")).compareTo(BigDecimal.ZERO) == 0;
     }
 
     private boolean isAfterHours(OffsetDateTime time) {

@@ -81,7 +81,7 @@ public class FraudControllerIntegrationTest extends BaseControllerIntegrationTes
     @Test
     @DisplayName("should return BLOCKED for rate limited IP")
     void shouldReturnBlockedForRateLimitedIp() throws Exception {
-        String ip = uniqueIp();
+        String ip = "203.0.113.1";
         FraudEvaluationContext ctx = new FraudEvaluationContext(
                 "0000000000", new BigDecimal("100.00"), "NGN",
                 "4111111111111111", ip, OffsetDateTime.now()

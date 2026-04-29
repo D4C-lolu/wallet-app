@@ -17,7 +17,9 @@ import java.util.UUID;
 @Component
 public class ObservabilityAspect {
 
-    @Around("execution(* com.interswitch.walletapp.*.*(..)) ")
+    @Around("within(com.interswitch.walletapp.services..*) " +
+            "|| within(com.interswitch.walletapp.repositories..*) " +
+            "|| within(com.interswitch.walletapp.dao..*)")
     public Object observe(ProceedingJoinPoint pjp) throws Throwable {
 
         String method = pjp.getSignature().getName();
@@ -46,7 +48,7 @@ public class ObservabilityAspect {
             log.error("← {} failed in {}ms{} — {}", method, System.currentTimeMillis() - start, context, ex.getMessage());
             throw ex;
         } finally {
-            MDC.remove("traceId");
+            MDC.remove("spanId");
             if (addedLocally) MDC.remove("traceId");
         }
     }

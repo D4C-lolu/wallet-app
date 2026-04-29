@@ -65,7 +65,7 @@ public class EmailQueueService {
         return id;
     }
 
-    @Scheduled(fixedDelayString = "${email.process-interval-ms:5000}")
+    //@Scheduled(fixedDelayString = "${email.process-interval-ms:5000}")
     public void processQueue() {
         if (!emailEnabled || !gmailService.isConfigured()) {
             return;

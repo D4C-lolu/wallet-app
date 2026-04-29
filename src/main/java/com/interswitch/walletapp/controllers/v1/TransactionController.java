@@ -1,5 +1,6 @@
 package com.interswitch.walletapp.controllers.v1;
 
+import com.interswitch.walletapp.annotation.ObserveParam;
 import com.interswitch.walletapp.constants.Roles;
 import com.interswitch.walletapp.models.response.TransactionResponse;
 import com.interswitch.walletapp.services.TransactionService;
@@ -24,7 +25,7 @@ public class TransactionController {
     )
     @GetMapping("{transactionId}")
     @PreAuthorize("hasRole('" + Roles.ADMIN + "') or hasRole('" + Roles.SUPER_ADMIN + "')")
-    public TransactionResponse getTransactionById(@PathVariable Long transactionId) {
+    public TransactionResponse getTransactionById(@ObserveParam("transactionId") @PathVariable Long transactionId) {
         return transactionService.getTransactionById(transactionId);
     }
 
@@ -35,7 +36,7 @@ public class TransactionController {
     @GetMapping("me/account/{accountId}")
     @PreAuthorize("hasRole('" + Roles.USER + "')")
     public Page<TransactionResponse> getMyTransactionsByAccount(
-            @PathVariable Long accountId,
+            @ObserveParam("accountId") @PathVariable Long accountId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
@@ -49,7 +50,7 @@ public class TransactionController {
     @GetMapping("account/{accountId}")
     @PreAuthorize("hasRole('" + Roles.ADMIN + "') or hasRole('" + Roles.SUPER_ADMIN + "')")
     public Page<TransactionResponse> getTransactionsByAccount(
-            @PathVariable Long accountId,
+            @ObserveParam("accountId") @PathVariable Long accountId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {

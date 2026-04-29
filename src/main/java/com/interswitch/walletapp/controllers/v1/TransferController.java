@@ -1,6 +1,7 @@
 package com.interswitch.walletapp.controllers.v1;
 
 import com.interswitch.walletapp.annotation.Idempotent;
+import com.interswitch.walletapp.annotation.ObserveParam;
 import com.interswitch.walletapp.constants.Roles;
 import com.interswitch.walletapp.models.request.TransferRequest;
 import com.interswitch.walletapp.models.response.TransferResponse;
@@ -42,7 +43,7 @@ public class TransferController {
     )
     @GetMapping("{transferId}")
     @PreAuthorize("hasRole('" + Roles.ADMIN + "') or hasRole('" + Roles.SUPER_ADMIN + "')")
-    public TransferResponse getTransferById(@PathVariable Long transferId) {
+    public TransferResponse getTransferById(@ObserveParam("transferId") @PathVariable Long transferId) {
         return transferService.getTransferById(transferId);
     }
 
@@ -53,7 +54,7 @@ public class TransferController {
     @GetMapping("me/account/{accountId}")
     @PreAuthorize("hasRole('" + Roles.USER + "')")
     public Page<TransferResponse> getMyTransfersByAccount(
-            @PathVariable Long accountId,
+            @ObserveParam("accountId") @PathVariable Long accountId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
@@ -67,7 +68,7 @@ public class TransferController {
     @GetMapping("account/{accountId}")
     @PreAuthorize("hasRole('" + Roles.ADMIN + "') or hasRole('" + Roles.SUPER_ADMIN + "')")
     public Page<TransferResponse> getTransfersByAccount(
-            @PathVariable Long accountId,
+            @ObserveParam("accountId") @PathVariable Long accountId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {

@@ -1463,7 +1463,7 @@
             "type": "loki",
             "uid": "Loki"
           },
-          "expr": "{app=\"wallet-app\"}",
+          "expr": "{app=\"default\"}",
           "legendFormat": ""
         }
       ]
@@ -1533,7 +1533,7 @@
             "type": "loki",
             "uid": "Loki"
           },
-          "expr": "{app=\"wallet-app\", level=\"WARN\"}",
+          "expr": "{app=\"default\", level=\"WARN\"}",
           "legendFormat": ""
         }
       ]
@@ -1568,7 +1568,7 @@
             "type": "loki",
             "uid": "Loki"
           },
-          "expr": "{app=\"wallet-app\"} |= \"fraud\"",
+          "expr": "{app=\"default\"} |= \"fraud\"",
           "legendFormat": ""
         }
       ]
@@ -1603,7 +1603,7 @@
             "type": "loki",
             "uid": "Loki"
           },
-          "expr": "{app=\"wallet-app\"} |= \"transfer\"",
+          "expr": "{app=\"default\"} |= \"transfer\"",
           "legendFormat": ""
         }
       ]

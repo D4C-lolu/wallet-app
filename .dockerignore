@@ -1,0 +1,15 @@
+.git
+.gitignore
+target/
+*.iml
+.idea/
+.mvn/
+Dckerfile
+.dockerignore
+LICENSE
+*.md
+*.log
+*.jar
+*.war
+postman_collection.json
+compose.yaml

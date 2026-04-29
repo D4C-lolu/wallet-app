@@ -1,5 +1,6 @@
 package com.interswitch.walletapp.controllers.v1;
 
+import com.interswitch.walletapp.annotation.ObserveParam;
 import com.interswitch.walletapp.constants.Permissions;
 import com.interswitch.walletapp.constants.Roles;
 import com.interswitch.walletapp.models.enums.CardStatus;
@@ -57,7 +58,7 @@ public class CardController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PatchMapping("{cardId}/block")
     @PreAuthorize("hasRole('"+ Roles.ADMIN +"') or hasRole('" + Roles.SUPER_ADMIN + "')")
-    public void blockCard(@PathVariable Long cardId) {
+    public void blockCard(@ObserveParam("cardId") @PathVariable Long cardId) {
         cardService.blockCard(cardId);
     }
 
@@ -68,7 +69,7 @@ public class CardController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PatchMapping("{cardId}/block/me")
     @PreAuthorize("hasRole('"+ Roles.USER +"')")
-    public void blockCardForSelf(@PathVariable Long cardId) {
+    public void blockCardForSelf(@ObserveParam("cardId") @PathVariable Long cardId) {
         cardService.blockCardForSelf(cardId);
     }
 
@@ -78,7 +79,7 @@ public class CardController {
     )
     @GetMapping("{cardId}")
     @PreAuthorize("hasAuthority('" + Permissions.CARD_READ + "')")
-    public CardResponse getCardById(@PathVariable Long cardId) {
+    public CardResponse getCardById(@ObserveParam("cardId") @PathVariable Long cardId) {
         return cardService.getCardById(cardId);
     }
 
@@ -89,7 +90,7 @@ public class CardController {
     @GetMapping("account/{accountId}")
     @PreAuthorize("hasAuthority('" + Permissions.CARD_READ + "')")
     public Page<CardResponse> getCardsByAccount(
-            @PathVariable Long accountId,
+            @ObserveParam("accountId") @PathVariable Long accountId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "created_at") String sortField,
@@ -105,7 +106,7 @@ public class CardController {
     @PatchMapping("{cardId}/status")
     @PreAuthorize("hasAuthority('" + Permissions.CARD_UPDATE + "')")
     public CardResponse updateCardStatus(
-            @PathVariable Long cardId,
+            @ObserveParam("cardId") @PathVariable Long cardId,
             @RequestParam CardStatus status
     ) {
         return cardService.updateCardStatus(cardId, status);
@@ -121,7 +122,7 @@ public class CardController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("{cardId}")
     @PreAuthorize("hasAuthority('" + Permissions.CARD_DELETE + "')")
-    public void deleteCard(@PathVariable Long cardId) {
+    public void deleteCard(@ObserveParam("cardId") @PathVariable Long cardId) {
         cardService.deleteCard(cardId);
     }
 }

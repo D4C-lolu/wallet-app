@@ -88,7 +88,7 @@ public class FraudDetectionServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("should return BLOCKED when IP is rate-limited")
     void shouldReturnBlockedWhenIpIsRateLimited() {
-        String hammeredIp = "10.0.0.1";
+        String hammeredIp = "203.0.113.1";
         FraudEvaluationContext ctx = new FraudEvaluationContext(
                 "0000000000",
                 new BigDecimal("100.00"),
@@ -136,16 +136,6 @@ public class FraudDetectionServiceIntegrationTest extends BaseIntegrationTest {
         FraudStatus status = fraudDetectionService.evaluate(ctx);
 
         assertThat(status).isEqualTo(FraudStatus.CLEAN);
-    }
-
-    @Test
-    @DisplayName("should flag SUSPICIOUS for amount that is a multiple of 1000")
-    void shouldFlagSuspiciousForRoundAmount() {
-        FraudEvaluationContext ctx = buildContext("4111111111111115", new BigDecimal("5000.00"));
-
-        FraudStatus status = fraudDetectionService.evaluate(ctx);
-
-        assertThat(status).isEqualTo(FraudStatus.SUSPICIOUS);
     }
 
     @Test
