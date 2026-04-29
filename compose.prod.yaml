@@ -29,10 +29,10 @@ services:
       resources:
         limits:
           cpus: '2'
-          memory: 1G
+          memory: 3G
         reservations:
           cpus: '1'
-          memory: 512M
+          memory: 2G
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${SERVER_PORT}/actuator/health"]
       interval: 30s
