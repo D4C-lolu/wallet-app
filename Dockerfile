@@ -60,7 +60,6 @@ FROM base AS prod
 
 ENTRYPOINT ["java", \
     "-XX:+UseZGC", \
-    "-XX:+ZGenerational", \
     "-XX:+UseStringDeduplication", \
     "-XX:+UseContainerSupport", \
     "-XX:MaxRAMPercentage=75.0", \

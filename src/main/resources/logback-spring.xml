@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <!-- Read Loki host from environment, default to localhost for local dev -->
     <springProperty name="LOKI_HOST" source="loki.host" defaultValue="localhost"/>
 
-    <!-- ANSI Color Codes -->
     <conversionRule conversionWord="clr"
                     class="org.springframework.boot.logging.logback.ColorConverter"/>
     <conversionRule conversionWord="wex"
                     class="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
 
-    <!-- Color mapping per log level -->
     <property name="GREY"   value="%clr(%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}){faint}"/>
     <property name="APP"    value="%clr([${springAppName:-app}]){cyan}"/>
     <property name="THREAD" value="%clr([%15.15t]){faint}"/>
@@ -35,32 +32,37 @@
     </appender>
 
     <!-- ═══════════════════════════════════════════════
-         LOKI — Loki4j 2.0.x format
+         LOKI — Loki4j 2.0.x schema
          ═══════════════════════════════════════════════ -->
     <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-        <batchMaxItems>1000</batchMaxItems>
-        <batchMaxBytes>4194304</batchMaxBytes>
-        <batchTimeoutMs>10000</batchTimeoutMs>
-        <sendQueueMaxBytes>41943040</sendQueueMaxBytes>
-
         <http>
             <url>http://${LOKI_HOST}:3100/loki/api/v1/push</url>
+            <requestTimeoutMs>5000</requestTimeoutMs>
         </http>
 
+        <!-- 2.0.x: labels are top-level, one per line, no commas, no <pattern> wrapper -->
         <labels>
-            <pattern>app=wallet-app,level=%level</pattern>
+            app=wallet-app
+            level=%level
         </labels>
 
+        <!-- 2.0.x: message is top-level with a nested <pattern> -->
         <message>
             <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [traceId=%X{traceId:-NO_TRACE}] [spanId=%X{spanId:-NO_SPAN}] %logger{39} : %msg%n%wex</pattern>
         </message>
+
+        <!-- 2.0.x: batch is a top-level block -->
+        <batch>
+            <maxItems>1000</maxItems>
+            <maxBytes>4194304</maxBytes>
+            <timeoutMs>10000</timeoutMs>
+        </batch>
     </appender>
 
     <!-- ═══════════════════════════════════════════════
          PROFILES
          ═══════════════════════════════════════════════ -->
 
-    <!-- Dev: DEBUG, coloured console + Loki -->
     <springProfile name="dev">
         <root level="DEBUG">
             <appender-ref ref="CONSOLE"/>
@@ -68,7 +70,6 @@
         </root>
     </springProfile>
 
-    <!-- Prod: INFO, plain console + Loki -->
     <springProfile name="prod">
         <root level="INFO">
             <appender-ref ref="CONSOLE_PLAIN"/>
@@ -76,8 +77,14 @@
         </root>
     </springProfile>
 
-    <!-- Fallback (no profile set): INFO, coloured console + Loki -->
-    <springProfile name="!(dev | prod)">
+    <springProfile name="local">
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="LOKI"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="!(dev | prod | local)">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="LOKI"/>
