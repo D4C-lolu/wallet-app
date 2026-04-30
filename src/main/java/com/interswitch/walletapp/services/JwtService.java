@@ -7,6 +7,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,9 +21,15 @@ public class JwtService {
 
     private final JwtProperties jwtProperties;
 
+    private SecretKey signingKey; // computed once
+
+    @PostConstruct
+    private void init() {
+        this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtProperties.getSecret()));
+    }
+
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecret());
-        return Keys.hmacShaKeyFor(keyBytes);
+        return signingKey;
     }
 
     public String generateAccessToken(UserPrincipal principal) {

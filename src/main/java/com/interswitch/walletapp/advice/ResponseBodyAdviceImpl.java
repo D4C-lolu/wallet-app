@@ -156,13 +156,7 @@ public class ResponseBodyAdviceImpl  {
     public ResponseEntity<ApiError> handleConstraintViolationException(ConstraintViolationException e, HttpServletRequest request) {
         final var errorTraceId = UUID.randomUUID().toString();
         final var uri = request.getRequestURI();
-        final var message = e.getConstraintViolations().stream()
-                .map(violation -> {
-                    String field = violation.getPropertyPath().toString();
-                    field = field.contains(".") ? field.substring(field.lastIndexOf('.') + 1) : field;
-                    return field + " " + violation.getMessage();
-                })
-                .collect(Collectors.joining(", "));
+        final var message = ExceptionHandlerUtils.resolveConstraintViolationMessage(e);
         log.error("Constraint violation at {} with id {}", uri, errorTraceId);
         return ExceptionHandlerUtils.badRequest(message, uri, errorTraceId);
     }

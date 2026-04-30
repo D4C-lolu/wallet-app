@@ -19,11 +19,23 @@ services:
       JWT_SECRET_EXPIRATION: ${JWT_SECRET_EXPIRATION}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
       LOKI_HOST: loki
+      # ── HikariCP ──────────────────────────────────────────────────────────
+      # Pool sized to match Postgres budget: max_connections=200, reserve ~50
+      # for admin/migrations, leaving ~150 for the app. With one app replica,
+      # 50 is a solid ceiling — raise alongside max_connections if you scale out.
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: 50
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: 10
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: 20000    # ms — fail fast rather than queue forever
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: 300000         # 5 min — reclaim idle connections
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: 600000         # 10 min — rotate before Postgres kills them
+      SPRING_DATASOURCE_HIKARI_KEEPALIVE_TIME: 60000        # 1 min — prevents firewall idle drops
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
     depends_on:
       postgres:
         condition: service_healthy
+      loki:
+        condition: service_started   # app ships logs to Loki; start it first
     restart: unless-stopped
     deploy:
       resources:
@@ -52,26 +64,46 @@ services:
     command: >
       postgres
       -c max_connections=200
-      -c shared_buffers=256MB
-      -c effective_cache_size=768MB
-      -c maintenance_work_mem=64MB
+      -c shared_buffers=512MB
+      -c effective_cache_size=1536MB
+      -c maintenance_work_mem=128MB
       -c checkpoint_completion_target=0.9
       -c wal_buffers=16MB
       -c default_statistics_target=100
       -c random_page_cost=1.1
       -c effective_io_concurrency=200
-      -c work_mem=4MB
+      -c work_mem=6MB
       -c synchronous_commit=off
       -c commit_delay=1000
       -c commit_siblings=5
+      -c idle_in_transaction_session_timeout=30000
+      -c statement_timeout=30000
+      -c log_min_duration_statement=1000
+    # ── How to scale the connection budget ────────────────────────────────────
+    # The three knobs that must move together:
+    #
+    #   max_connections      — hard cap in Postgres
+    #   shared_buffers       — ~25% of available RAM (raised memory limit below to 2G)
+    #   effective_cache_size — ~75% of available RAM (OS + Postgres combined estimate)
+    #   work_mem             — per-sort/hash memory; max pressure = max_connections * work_mem
+    #                          keep work_mem * max_connections well under available RAM
+    #
+    # Example progression:
+    #
+    #   2G RAM → max_connections=200, shared_buffers=512MB, work_mem=6MB   ← current
+    #   4G RAM → max_connections=300, shared_buffers=1GB,   work_mem=8MB
+    #   8G RAM → max_connections=500, shared_buffers=2GB,   work_mem=12MB
+    #
+    # If you add more app replicas, each gets its own pool. Two replicas at 50
+    # each = 100 connections — still within the 200 limit. Adjust accordingly.
     deploy:
       resources:
         limits:
           cpus: '2'
-          memory: 1G
+          memory: 2G       # raised from 1G — shared_buffers=512MB needs headroom
         reservations:
           cpus: '1'
-          memory: 512M
+          memory: 1G
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -88,6 +120,14 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   loki:
     image: grafana/loki:latest
@@ -96,6 +136,14 @@ services:
       - "${LOKI_PORT}:3100"
     volumes:
       - loki_data:/loki
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
 
   grafana:
     image: grafana/grafana:latest
@@ -112,6 +160,14 @@ services:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/var/lib/grafana/dashboards
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
 
 volumes:
   postgres_data:

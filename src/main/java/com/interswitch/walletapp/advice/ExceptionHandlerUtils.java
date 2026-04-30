@@ -1,8 +1,11 @@
 package com.interswitch.walletapp.advice;
 
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Path;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import tools.jackson.databind.exc.InvalidFormatException;
@@ -42,15 +45,16 @@ public class ExceptionHandlerUtils {
     }
 
     public static String resolveValidationMessage(MethodArgumentNotValidException e) {
-        String fieldErrors = e.getBindingResult().getFieldErrors().stream()
-                .map(error -> String.format("'%s': %s", error.getField(), Objects.toString(error.getDefaultMessage(), "")))
-                .collect(Collectors.joining(", "));
+        BindingResult result = e.getBindingResult();
 
-        String globalErrors = e.getBindingResult().getGlobalErrors().stream()
-                .map(error -> Objects.toString(error.getDefaultMessage(), "Validation failed"))
-                .collect(Collectors.joining(", "));
+        Stream<String> fieldErrors = result.getFieldErrors().stream()
+                .map(error -> String.format("'%s': %s", error.getField(),
+                        Objects.toString(error.getDefaultMessage(), "")));
 
-        String message = Stream.of(fieldErrors, globalErrors)
+        Stream<String> globalErrors = result.getGlobalErrors().stream()
+                .map(error -> Objects.toString(error.getDefaultMessage(), "Validation failed"));
+
+        String message = Stream.concat(fieldErrors, globalErrors)
                 .filter(s -> !s.isBlank())
                 .collect(Collectors.joining(", "));
 
@@ -70,16 +74,33 @@ public class ExceptionHandlerUtils {
     }
 
     public static String resolveHandlerValidationMessage(HandlerMethodValidationException e) {
-        return e.getParameterValidationResults().stream()
-                .map(result -> {
-                    final var paramName = result.getMethodParameter().getParameterName();
-                    final var errorMessage = result.getResolvableErrors().stream()
+        String message = e.getParameterValidationResults().stream()
+                .flatMap(result -> {
+                    String paramName = Objects.toString(result.getMethodParameter().getParameterName(), "unknown");
+                    return result.getResolvableErrors().stream()
                             .map(MessageSourceResolvable::getDefaultMessage)
-                            .collect(Collectors.joining(", "));
-                    return String.format("'%s' %s", paramName, errorMessage);
+                            .filter(Objects::nonNull)
+                            .map(error -> String.format("'%s': %s", paramName, error));
                 })
                 .collect(Collectors.joining(", "));
+
+        return message.isBlank() ? "Validation failed" : message;
     }
+
+    public static String resolveConstraintViolationMessage(ConstraintViolationException e) {
+        String message = e.getConstraintViolations().stream()
+                .map(v -> String.format("'%s': %s", extractFieldName(v.getPropertyPath()), v.getMessage()))
+                .collect(Collectors.joining(", "));
+
+        return message.isBlank() ? "Validation failed" : message;
+    }
+
+    private static String extractFieldName(Path path) {
+        String raw = path.toString();
+        int dot = raw.lastIndexOf('.');
+        return dot >= 0 ? raw.substring(dot + 1) : raw;
+    }
+
 
     private static String extractFieldName(InvalidFormatException e) {
         return e.getPath().isEmpty() ? "unknown" : e.getPath().getFirst().getPropertyName();
