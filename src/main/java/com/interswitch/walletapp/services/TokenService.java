@@ -1,20 +1,27 @@
 package com.interswitch.walletapp.services;
 
+import com.interswitch.walletapp.dao.UserDao;
 import com.interswitch.walletapp.exceptions.InvalidTokenException;
 import com.interswitch.walletapp.models.response.AuthResponse;
 import com.interswitch.walletapp.security.TokenStore;
 import com.interswitch.walletapp.security.UserDetailsServiceImpl;
 import com.interswitch.walletapp.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.util.Collection;
 
 @Service
 @RequiredArgsConstructor
 public class TokenService {
 
+    private static final int REVOCATION_BATCH_SIZE = 500;
+
     private final TokenStore tokenStore;
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
+    private final UserDao userDao;
 
     public AuthResponse issueTokens(UserPrincipal principal) {
         String accessToken  = jwtService.generateAccessToken(principal);
@@ -52,6 +59,16 @@ public class TokenService {
 
     public void revokeAll(Long userId) {
         tokenStore.revokeAllUserTokens(userId);
+    }
+
+    @Async
+    public void revokeAllForUsersAsync(Collection<Long> userIds) {
+        tokenStore.revokeAllUserTokensBatch(userIds);
+    }
+
+    @Async
+    public void revokeAllForRoleAsync(Long roleId) {
+        userDao.streamUserIdsByRoleId(roleId, REVOCATION_BATCH_SIZE, tokenStore::revokeAllUserTokensBatch);
     }
 
     public boolean isAccessTokenValid(String token) {

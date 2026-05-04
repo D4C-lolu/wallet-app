@@ -1,5 +1,6 @@
 package com.interswitch.walletapp.config;
 
+import com.redis.testcontainers.RedisContainer;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +17,13 @@ public class TestcontainersConfiguration {
         return new PostgreSQLContainer(DockerImageName.parse("postgres:16-alpine"))
                 .waitingFor(Wait.forListeningPort())
                 .withReuse(false);
+    }
+
+    @Bean
+    @ServiceConnection
+    RedisContainer redisContainer() {
+        return new RedisContainer(DockerImageName.parse("redis:7-alpine"))
+                .waitingFor(Wait.forListeningPort());
     }
 
 }

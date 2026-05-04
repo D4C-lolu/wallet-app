@@ -1,9 +1,10 @@
+# ── Dev stage ────────────────────────────────────────────────────────────────
+# For dev, .m2 is mounted at runtime via docker-compose volumes
 FROM maven:3.9.11-amazoncorretto-25 AS dev
 
 WORKDIR /build
 
 COPY pom.xml .
-RUN mvn dependency:go-offline -q
 
 COPY src ./src
 
@@ -17,15 +18,24 @@ FROM maven:3.9.11-amazoncorretto-25 AS deps
 
 WORKDIR /build
 
+# Copy local verveguard from host .m2 (passed as build context "m2")
+# Usage: docker build --build-context m2="$HOME/.m2" ...
+RUN --mount=type=bind,from=m2,source=repository/com/interswitch/verveguard,target=/root/.m2/repository/com/interswitch/verveguard,rw=false \
+    mkdir -p /root/.m2/repository/com/interswitch && \
+    cp -r /root/.m2/repository/com/interswitch/verveguard /tmp/verveguard-backup
+
 COPY pom.xml .
-RUN mvn dependency:go-offline -q
+# Use BuildKit cache mount for .m2, then restore verveguard
+RUN --mount=type=cache,target=/root/.m2,sharing=locked \
+    cp -r /tmp/verveguard-backup /root/.m2/repository/com/interswitch/verveguard && \
+    mvn dependency:go-offline -q
 
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 FROM deps AS builder
 
 COPY src ./src
-RUN mvn clean package -DskipTests -q
+RUN --mount=type=cache,target=/root/.m2,sharing=locked mvn clean package -DskipTests -q
 
 
 # ── Shared runtime base ───────────────────────────────────────────────────────
@@ -39,7 +49,12 @@ RUN apk add --no-cache curl
 
 COPY --from=builder /build/target/wallet-app-*.jar app.jar
 
-RUN chown appuser:appgroup app.jar
+# Copy GeoIP database for location anomaly detection
+RUN mkdir -p /opt/geoip
+COPY src/main/resources/GeoLite2-City.mmdb /opt/geoip/GeoLite2-City.mmdb
+
+RUN chown appuser:appgroup app.jar && \
+    chown -R appuser:appgroup /opt/geoip
 
 EXPOSE 8080
 

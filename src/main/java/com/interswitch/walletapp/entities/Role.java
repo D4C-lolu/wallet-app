@@ -34,6 +34,7 @@ public class Role extends CreatedAudit {
             joinColumns = @JoinColumn(name = "role_id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     private List<Permission> permissions;
 
     public Role(Long id) {

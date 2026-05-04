@@ -1,6 +1,7 @@
 package com.interswitch.walletapp.services;
 
 import com.interswitch.walletapp.configuration.JwtProperties;
+import com.interswitch.walletapp.entities.Permission;
 import com.interswitch.walletapp.security.UserPrincipal;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -41,10 +43,16 @@ public class JwtService {
     }
 
     private String generateToken(UserPrincipal principal, long expiry) {
+        List<String> permissions = principal.user().getRole().getPermissions().stream()
+                .map(Permission::getName)
+                .toList();
+
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())
                 .subject(String.valueOf(principal.user().getId()))
                 .claim("email", principal.user().getEmail())
+                .claim("role", principal.user().getRole().getName())
+                .claim("permissions", permissions)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + (expiry * 1000)))
                 .signWith(getSigningKey())
@@ -82,4 +90,24 @@ public class JwtService {
             return true;
         }
     }
+
+    @SuppressWarnings("unchecked")
+    public JwtUserClaims extractUserClaims(String token) {
+        // Parse claims directly from token - no caching needed since JWT parsing is fast
+        // and caching across requests can cause issues in tests
+        Claims claims = extractAllClaims(token);
+        return new JwtUserClaims(
+                Long.parseLong(claims.getSubject()),
+                claims.get("email", String.class),
+                claims.get("role", String.class),
+                claims.get("permissions", List.class)
+        );
+    }
+
+    public record JwtUserClaims(
+            Long userId,
+            String email,
+            String role,
+            List<String> permissions
+    ) {}
 }

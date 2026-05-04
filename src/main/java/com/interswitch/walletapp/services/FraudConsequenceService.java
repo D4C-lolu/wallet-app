@@ -31,12 +31,12 @@ public class FraudConsequenceService {
 
     private void handleBlockedTransaction(FraudEvaluationContext ctx, String cardHash, List<String> flags) {
         boolean cardBlocked = blockCard(cardHash);
-        sendFraudAlertEmail(ctx, cardHash, FraudStatus.BLOCKED, flags, cardBlocked);
+        sendFraudAlertEmail(ctx, FraudStatus.BLOCKED, flags, cardBlocked);
     }
 
     private void handleSuspiciousTransaction(FraudEvaluationContext ctx, String cardHash, List<String> flags) {
         // For suspicious transactions, we don't block the card but we do alert the merchant
-        sendFraudAlertEmail(ctx, cardHash, FraudStatus.SUSPICIOUS, flags, false);
+        sendFraudAlertEmail(ctx, FraudStatus.SUSPICIOUS, flags, false);
     }
 
     private boolean blockCard(String cardHash) {
@@ -54,7 +54,7 @@ public class FraudConsequenceService {
         }
     }
 
-    private void sendFraudAlertEmail(FraudEvaluationContext ctx, String cardHash, FraudStatus status, List<String> flags, boolean cardWasBlocked) {
+    private void sendFraudAlertEmail(FraudEvaluationContext ctx, FraudStatus status, List<String> flags, boolean cardWasBlocked) {
         if (!emailQueueService.isEnabled()) {
             return;
         }

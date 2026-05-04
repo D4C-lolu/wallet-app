@@ -1,8 +1,10 @@
 package com.interswitch.walletapp.base;
 
 import com.interswitch.walletapp.config.TestcontainersConfiguration;
+import com.interswitch.walletapp.security.TokenStore;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -14,6 +16,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Import(TestcontainersConfiguration.class)
 @Transactional
 public abstract class BaseIntegrationTest {
+
+    @Autowired
+    private TokenStore tokenStore;
+
+    @BeforeEach
+    void clearTokenCaches() {
+        // Clear token caches to prevent state leaking between tests.
+        // The DB transaction rolls back, but in-memory caches persist.
+        tokenStore.clearAll();
+    }
 
     protected String uniqueIp() {
         int counter = (int) (System.nanoTime() % 900000) + 100000;

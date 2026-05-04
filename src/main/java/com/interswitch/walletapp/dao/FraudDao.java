@@ -22,6 +22,31 @@ public class FraudDao {
 
     private final NamedParameterJdbcTemplate namedJdbc;
 
+    public record FraudEvaluationData(
+            boolean isBlacklisted,
+            int velocityCount,
+            BigDecimal transactionLimit,
+            Long merchantId
+    ) {}
+
+    public FraudEvaluationData getEvaluationData(String accountNumber, String cardHash, OffsetDateTime since) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("accountNumber", accountNumber)
+                .addValue("cardHash", cardHash)
+                .addValue("since", since);
+
+        return namedJdbc.queryForObject(
+                "SELECT * FROM sp_fraud_get_evaluation_data(:accountNumber, :cardHash, :since)",
+                params,
+                (rs, rowNum) -> new FraudEvaluationData(
+                        rs.getBoolean("is_blacklisted"),
+                        rs.getInt("velocity_count"),
+                        rs.getBigDecimal("transaction_limit"),
+                        rs.getObject("merchant_id", Long.class)
+                )
+        );
+    }
+
     public void insertFraudAttempt(FraudAttemptRecord record) {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("cardHash", record.cardHash())
@@ -49,15 +74,6 @@ public class FraudDao {
         return count != null ? count : 0;
     }
 
-    public Optional<BigDecimal> getMerchantSingleLimit(Long merchantId) {
-        BigDecimal limit = namedJdbc.queryForObject(
-                "SELECT sp_fraud_get_merchant_single_limit(:merchantId)",
-                new MapSqlParameterSource("merchantId", merchantId),
-                BigDecimal.class
-        );
-        return Optional.ofNullable(limit);
-    }
-
     public Optional<BigDecimal> getMerchantSingleLimitByAccount(String accountNumber) {
         BigDecimal limit = namedJdbc.queryForObject(
                 "SELECT sp_fraud_get_merchant_single_limit_by_account(:accountNumber)",
@@ -65,15 +81,6 @@ public class FraudDao {
                 BigDecimal.class
         );
         return Optional.ofNullable(limit);
-    }
-
-    public Optional<Long> getMerchantIdByAccount(String accountNumber) {
-        Long merchantId = namedJdbc.queryForObject(
-                "SELECT sp_fraud_get_merchant_id_by_account(:accountNumber)",
-                new MapSqlParameterSource("accountNumber", accountNumber),
-                Long.class
-        );
-        return Optional.ofNullable(merchantId);
     }
 
     public List<FraudAttemptResponse> getFraudAttempts(int limit, int offset) {

@@ -1,11 +1,23 @@
 version: '3.9'
 
+# ── BUILD NOTE ────────────────────────────────────────────────────────────────
+# The verveguard dependency exists only in your local .m2 folder.
+# Build with the m2 build context pointing to your .m2 folder:
+#
+#   docker buildx build --build-context m2="${USERPROFILE}/.m2" \
+#     --target prod -t wallet-app:prod .
+#
+# Then run: docker compose -f compose.prod.yaml up -d
+# ──────────────────────────────────────────────────────────────────────────────
+
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
       target: prod
+      additional_contexts:
+        m2: "${USERPROFILE}/.m2"
     container_name: wallet-app
     environment:
       SPRING_PROFILES_ACTIVE: prod
@@ -19,6 +31,8 @@ services:
       JWT_SECRET_EXPIRATION: ${JWT_SECRET_EXPIRATION}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
       LOKI_HOST: loki
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       # ── HikariCP ──────────────────────────────────────────────────────────
       # Pool sized to match Postgres budget: max_connections=200, reserve ~50
       # for admin/migrations, leaving ~150 for the app. With one app replica,
@@ -51,6 +65,28 @@ services:
       timeout: 3s
       retries: 3
       start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: postgres:16-alpine
@@ -174,3 +210,4 @@ volumes:
   prometheus_data:
   loki_data:
   grafana_data:
+  redis_data:

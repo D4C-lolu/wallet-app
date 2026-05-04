@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -41,6 +42,9 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
     void setupSecurityContext() {
@@ -237,9 +241,10 @@ public class UserServiceIntegrationTest extends BaseIntegrationTest {
 
         userService.changeUserRole(existing.getId(), merchantRole.getId());
 
-        forceFlush();
-        User updated = userRepository.findById(existing.getId()).orElseThrow();
-        assertThat(updated.getRole().getId()).isEqualTo(merchantRole.getId());
+        String roleName = jdbcTemplate.queryForObject(
+                "SELECT sp_user_find_role_name_by_id(?)", String.class, existing.getId()
+        );
+        assertThat(roleName).isEqualTo(merchantRole.getName());
     }
 
     @Test

@@ -1,8 +1,8 @@
 package com.interswitch.walletapp.util;
 
-import com.interswitch.walletapp.entities.User;
 import com.interswitch.walletapp.exceptions.BadRequestException;
 import com.interswitch.walletapp.exceptions.UnauthorizedException;
+import com.interswitch.walletapp.security.JwtUserPrincipal;
 import com.interswitch.walletapp.security.UserPrincipal;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,11 +19,17 @@ public class SecurityUtil {
             return Optional.empty();
         }
 
-        if (!(authentication.getPrincipal() instanceof UserPrincipal(User user))) {
-            return Optional.empty();
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof JwtUserPrincipal jwtPrincipal) {
+            return Optional.of(jwtPrincipal.getId());
         }
 
-        return Optional.of(user.getId());
+        if (principal instanceof UserPrincipal userPrincipal) {
+            return Optional.of(userPrincipal.getId());
+        }
+
+        return Optional.empty();
     }
 
     public static Long getCurrentUserId() {

@@ -2,7 +2,6 @@ package com.interswitch.walletapp.services;
 
 import com.interswitch.walletapp.models.request.LoginRequest;
 import com.interswitch.walletapp.models.response.AuthResponse;
-import com.interswitch.walletapp.security.UserDetailsServiceImpl;
 import com.interswitch.walletapp.security.UserPrincipal;
 import com.interswitch.walletapp.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -16,17 +15,16 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
-    private final UserDetailsServiceImpl userDetailsService;
 
     public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(
+        var authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.email(),
                         request.password()
                 )
         );
 
-        UserPrincipal principal = (UserPrincipal) userDetailsService.loadUserByUsername(request.email());
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         return tokenService.issueTokens(principal);
     }
 

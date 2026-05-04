@@ -4,6 +4,10 @@ import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Component
 @RequiredArgsConstructor
 public class TokenStore {
@@ -32,8 +36,27 @@ public class TokenStore {
         userRevocationCache.put(userId, System.currentTimeMillis());
     }
 
+    public void revokeAllUserTokensBatch(Collection<Long> userIds) {
+        if (userIds.isEmpty()) return;
+        long now = System.currentTimeMillis();
+        Map<Long, Long> batch = userIds.stream()
+                .collect(Collectors.toMap(id -> id, _ -> now));
+        userRevocationCache.putAll(batch);
+    }
+
     public boolean isRevokedForUser(Long userId, long tokenIssuedAt) {
         Long revokedAt = userRevocationCache.getIfPresent(userId);
+        // Token is revoked if it was issued strictly before the revocation time.
+        // We use < (not <=) so tokens issued in the same millisecond as revocation are valid.
         return revokedAt != null && tokenIssuedAt < revokedAt;
+    }
+
+    /**
+     * Clears all caches. Used for testing to prevent cache state leaking between tests.
+     */
+    public void clearAll() {
+        accessTokenCache.invalidateAll();
+        refreshTokenCache.invalidateAll();
+        userRevocationCache.invalidateAll();
     }
 }

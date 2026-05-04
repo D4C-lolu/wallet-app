@@ -6,6 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
       target: dev
+      additional_contexts:
+        m2: "${USERPROFILE}/.m2"
     container_name: wallet-app
     environment:
       SPRING_PROFILES_ACTIVE: dev
@@ -19,12 +21,14 @@ services:
       JWT_SECRET_EXPIRATION: ${JWT_SECRET_EXPIRATION}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
       LOKI_HOST: loki
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
       - "35729:35729"
     volumes:
       - ./src:/build/src
-      - maven_cache:/root/.m2
+      - ${USERPROFILE}/.m2:/root/.m2
     depends_on:
       postgres:
         condition: service_healthy
@@ -35,6 +39,19 @@ services:
       timeout: 3s
       retries: 3
       start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: postgres:16-alpine
@@ -101,4 +118,4 @@ volumes:
   prometheus_data:
   loki_data:
   grafana_data:
-  maven_cache:
+  redis_data:

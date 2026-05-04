@@ -9,6 +9,7 @@ import com.interswitch.walletapp.models.request.ChangePasswordRequest;
 import com.interswitch.walletapp.models.request.CreateUserRequest;
 import com.interswitch.walletapp.models.request.UpdateUserRequest;
 import com.interswitch.walletapp.models.response.UserResponse;
+import com.interswitch.walletapp.repositories.UserRepository;
 import com.interswitch.walletapp.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
@@ -25,7 +26,9 @@ import java.util.*;
 public class UserService {
 
     private final UserDao userDao;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
             "id", "firstname", "lastname", "email", "phone", "user_status", "created_at", "updated_at"
@@ -125,6 +128,11 @@ public class UserService {
         UserResponse existing = getUserById(userId);
         userDao.updateStatus(userId, status.name());
 
+        // Invalidate tokens when user is suspended/deactivated
+        if (status == UserStatus.SUSPENDED || status == UserStatus.INACTIVE) {
+            tokenService.revokeAll(userId);
+        }
+
         return new UserResponse(
                 existing.id(),
                 existing.firstname(),
@@ -146,7 +154,10 @@ public class UserService {
         String roleName = userDao.findRoleNameById(roleId)
                 .orElseThrow(()-> new NotFoundException("Role not found") );
 
-        userDao.updateRole(userId, roleId);
+        userRepository.updateRole(userId, roleId);
+
+        // Invalidate tokens since permissions are embedded in JWT
+        tokenService.revokeAll(userId);
 
         return new UserResponse(
                 existing.id(),

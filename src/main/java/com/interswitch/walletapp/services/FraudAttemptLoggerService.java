@@ -6,6 +6,7 @@ import com.interswitch.walletapp.models.projections.FraudAttemptRecord;
 import com.interswitch.walletapp.models.projections.FraudEvaluationContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ public class FraudAttemptLoggerService {
 
     private final FraudDao fraudDao;
 
+    @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logAttempt(String cardHash, FraudEvaluationContext ctx, Long merchantId, FraudStatus status, List<String> flags) {
         try {

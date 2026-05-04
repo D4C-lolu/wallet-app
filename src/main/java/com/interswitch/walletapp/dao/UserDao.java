@@ -1,8 +1,11 @@
 package com.interswitch.walletapp.dao;
 
+import com.interswitch.walletapp.entities.User;
 import com.interswitch.walletapp.models.enums.UserStatus;
 import com.interswitch.walletapp.models.response.UserResponse;
+import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Cache;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -18,6 +21,7 @@ import java.util.Optional;
 public class UserDao {
 
     private final NamedParameterJdbcTemplate namedJdbc;
+    private final EntityManagerFactory entityManagerFactory;
 
     public Map<String, Object> validateForCreate(String email, String phone, Long roleId) {
         return namedJdbc.queryForMap(
@@ -84,14 +88,6 @@ public class UserDao {
         );
     }
 
-    public void updateRole(Long id, Long roleId) {
-        namedJdbc.queryForList(
-                "SELECT sp_user_update_role(:id, :roleId)",
-                new MapSqlParameterSource()
-                        .addValue("id", id)
-                        .addValue("roleId", roleId)
-        );
-    }
 
     public void updatePassword(Long id, String passwordHash) {
         namedJdbc.queryForList(
@@ -110,6 +106,7 @@ public class UserDao {
                         .addValue("deletedBy", deletedBy)
         );
     }
+
 
     public Optional<String> findRoleNameById(Long roleId) {
         String result = namedJdbc.queryForObject(
@@ -134,6 +131,23 @@ public class UserDao {
                 new MapSqlParameterSource("id", id),
                 Boolean.class
         ));
+    }
+
+    public void streamUserIdsByRoleId(Long roleId, int batchSize, java.util.function.Consumer<List<Long>> batchConsumer) {
+        long lastId = 0;
+        while (true) {
+            List<Long> batch = namedJdbc.queryForList(
+                    "SELECT id FROM users WHERE role_id = :roleId AND deleted_at IS NULL AND id > :lastId ORDER BY id LIMIT :batchSize",
+                    new MapSqlParameterSource()
+                            .addValue("roleId", roleId)
+                            .addValue("lastId", lastId)
+                            .addValue("batchSize", batchSize),
+                    Long.class
+            );
+            if (batch.isEmpty()) break;
+            batchConsumer.accept(batch);
+            lastId = batch.getLast();
+        }
     }
 
     private RowMapper<UserResponse> userRowMapper() {

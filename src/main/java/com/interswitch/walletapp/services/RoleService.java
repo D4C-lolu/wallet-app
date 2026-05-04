@@ -31,6 +31,7 @@ public class RoleService {
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
     private final RoleMapper roleMapper;
+    private final TokenService tokenService;
 
     @Transactional
     public RoleResponse createRole(CreateRoleRequest request) {
@@ -64,6 +65,8 @@ public class RoleService {
         rolePermission.setRole(new Role(roleId));
 
         rolePermissionRepository.save(rolePermission);
+
+        invalidateTokensForRole(roleId);
     }
 
     @Transactional
@@ -72,6 +75,8 @@ public class RoleService {
             throw new NotFoundException("Permission not assigned to role");
         }
         rolePermissionRepository.deleteById(new RolePermissionId(roleId, permissionId));
+
+        invalidateTokensForRole(roleId);
     }
 
     public RoleResponse getRoleById(Long roleId) {
@@ -116,7 +121,10 @@ public class RoleService {
                 })
                 .toList();
 
-        rolePermissionRepository.saveAll(toAssign);
+        if (!toAssign.isEmpty()) {
+            rolePermissionRepository.saveAll(toAssign);
+            invalidateTokensForRole(roleId);
+        }
     }
 
     @Transactional
@@ -130,5 +138,13 @@ public class RoleService {
                 .toList();
 
         rolePermissionRepository.deleteAllById(toRevoke);
+
+        if (!toRevoke.isEmpty()) {
+            invalidateTokensForRole(roleId);
+        }
+    }
+
+    private void invalidateTokensForRole(Long roleId) {
+        tokenService.revokeAllForRoleAsync(roleId);
     }
 }

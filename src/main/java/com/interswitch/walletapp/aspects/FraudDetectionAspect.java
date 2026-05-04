@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
+import java.util.UUID;
 
 @Slf4j
 @Aspect
@@ -33,6 +34,7 @@ public class FraudDetectionAspect {
         TransferRequest request = extractTransferRequest(joinPoint);
 
         FraudEvaluationContext ctx = new FraudEvaluationContext(
+                UUID.randomUUID().toString(),
                 request.fromAccountNumber(),
                 request.amount(),
                 request.currency(),

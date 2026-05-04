@@ -4,6 +4,8 @@ import com.interswitch.walletapp.entities.audit.FullAudit;
 import com.interswitch.walletapp.models.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.util.Objects;
